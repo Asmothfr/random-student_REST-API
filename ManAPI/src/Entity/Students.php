@@ -1,0 +1,81 @@
+<?php
+
+namespace App\Entity;
+
+use App\Repository\StudentsRepository;
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity(repositoryClass: StudentsRepository::class)]
+class Students
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\ManyToOne(inversedBy: 'students')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?classrooms $FK_classroom_id = null;
+
+    #[ORM\Column(length: 31, nullable: true)]
+    private ?string $lastname = null;
+
+    #[ORM\Column(length: 31)]
+    private ?string $firstname = null;
+
+    #[ORM\Column]
+    private ?int $score = null;
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getFKClassroomId(): ?classrooms
+    {
+        return $this->FK_classroom_id;
+    }
+
+    public function setFKClassroomId(?classrooms $FK_classroom_id): self
+    {
+        $this->FK_classroom_id = $FK_classroom_id;
+
+        return $this;
+    }
+
+    public function getLastname(): ?string
+    {
+        return $this->lastname;
+    }
+
+    public function setLastname(?string $lastname): self
+    {
+        $this->lastname = $lastname;
+
+        return $this;
+    }
+
+    public function getFirstname(): ?string
+    {
+        return $this->firstname;
+    }
+
+    public function setFirstname(string $firstname): self
+    {
+        $this->firstname = $firstname;
+
+        return $this;
+    }
+
+    public function getScore(): ?int
+    {
+        return $this->score;
+    }
+
+    public function setScore(int $score): self
+    {
+        $this->score = $score;
+
+        return $this;
+    }
+}
