@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Symfony\Component\Validator\Constraints as Assert;
 use App\Repository\SchedulesRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -16,12 +17,14 @@ class Schedules
 
     #[ORM\ManyToOne(inversedBy: 'schedules')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?classrooms $FK_classroom_id = null;
+    private ?Classrooms $FK_classroom = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Assert\DateTime()]
     private ?\DateTimeInterface $start_time = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Assert\DateTime()]
     private ?\DateTimeInterface $end_time = null;
 
     public function getId(): ?int
@@ -31,12 +34,12 @@ class Schedules
 
     public function getFKClassroomId(): ?classrooms
     {
-        return $this->FK_classroom_id;
+        return $this->FK_classroom;
     }
 
-    public function setFKClassroomId(?classrooms $FK_classroom_id): self
+    public function setFKClassroomId(?classrooms $FK_classroom): self
     {
-        $this->FK_classroom_id = $FK_classroom_id;
+        $this->FK_classroom = $FK_classroom;
 
         return $this;
     }

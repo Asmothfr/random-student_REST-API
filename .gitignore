@@ -359,3 +359,7 @@ public/bundles/
 var/
 vendor/
 ###< symfony/framework-bundle ###
+
+###> lexik/jwt-authentication-bundle ###
+ManApi/config/jwt/*.pem
+###< lexik/jwt-authentication-bundle ###
