@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Symfony\Component\Validator\Constraints as Assert;
 use App\Repository\ClassroomsRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -17,15 +18,17 @@ class Classrooms
 
     #[ORM\ManyToOne(inversedBy: 'classrooms')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?establishments $FK_establishment_id = null;
+    private ?Establishments $FK_establishment = null;
 
     #[ORM\Column(length: 127)]
+    #[Assert\NotBlank(message:'Name is required.')]
+    #[Assert\Regex('/[-a-zA-Z0-9]/')]
     private ?string $name = null;
 
-    #[ORM\OneToMany(mappedBy: 'FK_classroom_id', targetEntity: Students::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'FK_classroom', targetEntity: Students::class, orphanRemoval: true)]
     private Collection $students;
 
-    #[ORM\OneToMany(mappedBy: 'FK_classroom_id', targetEntity: Schedules::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'FK_classroom', targetEntity: Schedules::class, orphanRemoval: true)]
     private Collection $schedules;
 
     public function __construct()
@@ -41,12 +44,12 @@ class Classrooms
 
     public function getFKEstablishmentId(): ?establishments
     {
-        return $this->FK_establishment_id;
+        return $this->FK_establishment;
     }
 
-    public function setFKEstablishmentId(?establishments $FK_establishment_id): self
+    public function setFKEstablishmentId(?establishments $FK_establishment): self
     {
-        $this->FK_establishment_id = $FK_establishment_id;
+        $this->FK_establishment = $FK_establishment;
 
         return $this;
     }

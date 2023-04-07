@@ -2,51 +2,64 @@
 
 namespace App\Entity;
 
-use App\Repository\UsersRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\UsersRepository;
+use JMS\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Hateoas\Configuration\Annotation as Hateoas;
+
+/**
+ * @Hateoas\Relation(
+ *      "self",
+ *      href = @Hateoas\Route(
+ *          "dev_users_get",
+ *          parameters = { "id" = "expr(object.getId())" }
+ *      ),
+ *      exclusion = @Hateoas\Exclusion(groups="user_identity")
+ * )
+ *
+ */
 
 #[ORM\Entity(repositoryClass: UsersRepository::class)]
-class Users
+class Users implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["user_identity"])]
     private ?int $id = null;
 
-    #[ORM\Column(length: 31)]
-    private ?string $name = null;
-
-    #[ORM\Column(length: 63)]
+    #[ORM\Column(length: 180, unique: true)]
+    #[Assert\Email(message:"The email is not valid.")]
+    #[Assert\NotBlank(message:"Email is required.")]
+    #[Groups(["user_identity"])]
     private ?string $email = null;
 
-    #[ORM\Column(length: 31)]
+    #[ORM\Column]
+    #[Assert\NotBlank(message: "Roles is required.")]
+    private array $roles = [];
+
+    /**
+     * @var string The hashed password
+     */
+    #[ORM\Column]
+    #[Assert\NotBlank(message: "Password is required.")]
+    #[Assert\Regex('/[-a-zA-Z0-9]/')]
+    #[Assert\Length(min: 16, max:255, minMessage: 'Password must be at least 16 characters long', maxMessage: 'Password cannot be longer than 255 characters',)]
     private ?string $password = null;
 
-    #[ORM\OneToMany(mappedBy: 'FK_user_id', targetEntity: Establishments::class, orphanRemoval: true)]
-    private Collection $establishments;
-
-    public function __construct()
-    {
-        $this->establishments = new ArrayCollection();
-    }
+    #[ORM\Column(length: 31)]
+    #[Assert\NotBlank(message: "Name is required.")]
+    #[Assert\Regex('/[-a-zA-Z0-9]/')]
+    #[Assert\Length(min: 8, max:32, minMessage: 'Name must be at least 8 characters long', maxMessage: 'Name cannot be longer than 32 characters',)]
+    #[Groups(["user_identity"])]
+    private ?string $name = null;
 
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getName(): ?string
-    {
-        return $this->name;
-    }
-
-    public function setName(string $name): self
-    {
-        $this->name = $name;
-
-        return $this;
     }
 
     public function getEmail(): ?string
@@ -61,7 +74,39 @@ class Users
         return $this;
     }
 
-    public function getPassword(): ?string
+    /**
+     * A visual identifier that represents this user.
+     *
+     * @see UserInterface
+     */
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function getRoles(): array
+    {
+        $roles = $this->roles;
+        // guarantee every user at least has ROLE_USER
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
+    }
+
+    public function setRoles(array $roles): self
+    {
+        $this->roles = $roles;
+
+        return $this;
+    }
+
+    /**
+     * @see PasswordAuthenticatedUserInterface
+     */
+    public function getPassword(): string
     {
         return $this->password;
     }
@@ -74,31 +119,22 @@ class Users
     }
 
     /**
-     * @return Collection<int, Establishments>
+     * @see UserInterface
      */
-    public function getEstablishments(): Collection
+    public function eraseCredentials()
     {
-        return $this->establishments;
+        // If you store any temporary, sensitive data on the user, clear it here
+        // $this->plainPassword = null;
     }
 
-    public function addEstablishment(Establishments $establishment): self
+    public function getName(): ?string
     {
-        if (!$this->establishments->contains($establishment)) {
-            $this->establishments->add($establishment);
-            $establishment->setFKUserId($this);
-        }
-
-        return $this;
+        return $this->name;
     }
 
-    public function removeEstablishment(Establishments $establishment): self
+    public function setName(string $name): self
     {
-        if ($this->establishments->removeElement($establishment)) {
-            // set the owning side to null (unless already changed)
-            if ($establishment->getFKUserId() === $this) {
-                $establishment->setFKUserId(null);
-            }
-        }
+        $this->name = $name;
 
         return $this;
     }

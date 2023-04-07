@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Symfony\Component\Validator\Constraints as Assert;
 use App\Repository\StudentsRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -15,12 +16,15 @@ class Students
 
     #[ORM\ManyToOne(inversedBy: 'students')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?classrooms $FK_classroom_id = null;
+    private ?Classrooms $FK_classroom = null;
 
     #[ORM\Column(length: 31, nullable: true)]
+    #[Assert\Regex('/[-a-zA-Z]/')]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 31)]
+    #[Assert\Regex('/[-a-zA-Z]/')]
+    #[Assert\NotBlank(message:'First name is required')]
     private ?string $firstname = null;
 
     #[ORM\Column]
@@ -33,12 +37,12 @@ class Students
 
     public function getFKClassroomId(): ?classrooms
     {
-        return $this->FK_classroom_id;
+        return $this->FK_classroom;
     }
 
-    public function setFKClassroomId(?classrooms $FK_classroom_id): self
+    public function setFKClassroomId(?classrooms $FK_classroom): self
     {
-        $this->FK_classroom_id = $FK_classroom_id;
+        $this->FK_classroom = $FK_classroom;
 
         return $this;
     }
