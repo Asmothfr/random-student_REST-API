@@ -15,7 +15,7 @@ class Students
 
     #[ORM\ManyToOne(inversedBy: 'students')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?classrooms $FK_classroom_id = null;
+    private ?classrooms $FK_classroom = null;
 
     #[ORM\Column(length: 31, nullable: true)]
     private ?string $lastname = null;
@@ -33,12 +33,12 @@ class Students
 
     public function getFKClassroomId(): ?classrooms
     {
-        return $this->FK_classroom_id;
+        return $this->FK_classroom;
     }
 
-    public function setFKClassroomId(?classrooms $FK_classroom_id): self
+    public function setFKClassroomId(?classrooms $FK_classroom): self
     {
-        $this->FK_classroom_id = $FK_classroom_id;
+        $this->FK_classroom = $FK_classroom;
 
         return $this;
     }

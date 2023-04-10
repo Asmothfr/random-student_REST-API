@@ -16,7 +16,7 @@ class Schedules
 
     #[ORM\ManyToOne(inversedBy: 'schedules')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?classrooms $FK_classroom_id = null;
+    private ?classrooms $FK_classroom = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $start_time = null;
@@ -31,12 +31,12 @@ class Schedules
 
     public function getFKClassroomId(): ?classrooms
     {
-        return $this->FK_classroom_id;
+        return $this->FK_classroom;
     }
 
-    public function setFKClassroomId(?classrooms $FK_classroom_id): self
+    public function setFKClassroomId(?classrooms $FK_classroom): self
     {
-        $this->FK_classroom_id = $FK_classroom_id;
+        $this->FK_classroom = $FK_classroom;
 
         return $this;
     }

@@ -17,12 +17,12 @@ class Establishments
 
     #[ORM\ManyToOne(inversedBy: 'establishments')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?users $FK_user_id = null;
+    private ?users $FK_user = null;
 
     #[ORM\Column(length: 63)]
     private ?string $name = null;
 
-    #[ORM\OneToMany(mappedBy: 'FK_establishment_id', targetEntity: Classrooms::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'FK_establishment', targetEntity: Classrooms::class, orphanRemoval: true)]
     private Collection $classrooms;
 
     public function __construct()
@@ -37,12 +37,12 @@ class Establishments
 
     public function getFKUserId(): ?users
     {
-        return $this->FK_user_id;
+        return $this->FK_user;
     }
 
-    public function setFKUserId(?users $FK_user_id): self
+    public function setFKUserId(?users $FK_user): self
     {
-        $this->FK_user_id = $FK_user_id;
+        $this->FK_user = $FK_user;
 
         return $this;
     }
