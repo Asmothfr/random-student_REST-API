@@ -67,8 +67,8 @@ class DevUsersController extends AbstractController
         ]);
     }
 
-    #[Route('api/dev/users/user/{id<\d+>}/edit/{username<[a-zA-Z0-9]{8,32}>}', name:'dev_user_update-one-user-name', methods:['PUT'])]
-    public function editUers(Request $request, string $id , string $username, UsersRepository $usersRepository, EntityManagerInterface $manager): JsonResponse
+    #[Route('api/dev/users/user/{id<\d+>}/edit/{username<[a-zA-Z0-9]{8,32}>}', name:'dev_user_update-name', methods:['PUT'])]
+    public function editUsername(Request $request, string $id , string $username, UsersRepository $usersRepository, EntityManagerInterface $manager): JsonResponse
     {
         $user = $usersRepository->find($id);
         if($user)
@@ -86,9 +86,32 @@ class DevUsersController extends AbstractController
         {
             return $this->json([
                 Response::HTTP_NOT_FOUND,
-                'content' => 'Utilisateur introuvable'
+                'content' => 'User not found'
             ]);
         }
+    }
+    #[Route('api/dev/users/user/{id<\d+>}/edit/{usermail<[\w\-\.]+@[\w-]+\.+[\w-]{2,4}>}', name:'dev_user_update-mail', methods:['PUT'])]
+    public function editUsermail(Request $request, string $id, string $usermail, UsersRepository $usersRepository, EntityManagerInterface $manager): JsonResponse
+    {
+        // ! Faire REGEX pour email !
+        $user = $usersRepository->find($id);
+        if($user)
+        {
+            $oldMail = $user->getEmail();
+            $user->setEmail($usermail);
+
+            $manager->persist($user);
+            $manager->flush();
+            
+            return $this->json([
+                Response::HTTP_OK,
+                'content' => "User email $oldMail was changed with $usermail"
+            ]);
+        }
+        return $this->json([
+            Response::HTTP_NOT_FOUND,
+            'content' => "User not found."
+        ]);
     }
 
     #[Route('api/dev/users/delete', name:'delete_all_users', methods:['DELETE'])]
