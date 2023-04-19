@@ -16,7 +16,7 @@ class Schedules
 
     #[ORM\ManyToOne(inversedBy: 'schedules')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?classrooms $FK_classroom = null;
+    private ?Classrooms $FK_classroom = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $start_time = null;

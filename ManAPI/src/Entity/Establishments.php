@@ -17,7 +17,7 @@ class Establishments
 
     #[ORM\ManyToOne(inversedBy: 'establishments')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?users $FK_user = null;
+    private ?Users $FK_user = null;
 
     #[ORM\Column(length: 63)]
     private ?string $name = null;
@@ -35,12 +35,12 @@ class Establishments
         return $this->id;
     }
 
-    public function getFKUserId(): ?users
+    public function getFKUserId(): ?Users
     {
         return $this->FK_user;
     }
 
-    public function setFKUserId(?users $FK_user): self
+    public function setFKUserId(?Users $FK_user): self
     {
         $this->FK_user = $FK_user;
 

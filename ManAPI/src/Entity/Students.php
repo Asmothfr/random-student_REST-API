@@ -15,7 +15,7 @@ class Students
 
     #[ORM\ManyToOne(inversedBy: 'students')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?classrooms $FK_classroom = null;
+    private ?Classrooms $FK_classroom = null;
 
     #[ORM\Column(length: 31, nullable: true)]
     private ?string $lastname = null;

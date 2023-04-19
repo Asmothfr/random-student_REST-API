@@ -14,6 +14,7 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
 class DevUsersController extends AbstractController
 {
@@ -65,77 +66,33 @@ class DevUsersController extends AbstractController
         ]);
     }
 
-    #[Route('api/dev/users/user/{id<\d+>}/edit/username/{username<[a-zA-Z0-9]{8,32}>}', name:'dev_user_update-name', methods:['PUT'])]
-    public function editUsername(Request $request, string $id , string $username, UsersRepository $usersRepository, EntityManagerInterface $manager): JsonResponse
+    #[Route('api/dev/users/user/{id<\d+>}', name:'edit-user', methods:['PUT'])]
+    public function editUser(Request $request, int $id, UsersRepository $usersRepository, EntityManagerInterface $manager): JsonResponse
     {
-        $user = $usersRepository->find($id);
-        if($user)
+        $currentUser = $usersRepository->find($id);
+        if($currentUser)
         {
-            $oldUsername = $user->getName();
-            $user->setName($username);
-            $manager->persist($user);
+            $jsonData = $request->getContent();
+            $updatedUser = $this->serializer->deserialize($jsonData, Users::class, 'json',
+                            [AbstractNormalizer::OBJECT_TO_POPULATE=>$currentUser]);
+
+            $manager->persist($updatedUser);
             $manager->flush();
             return $this->json([
-                Response::HTTP_OK, [], true,
-                'content' => "Username $oldUsername was changed with $username."
+                Response::HTTP_NO_CONTENT,
+                null
             ]);
         }
         else
         {
             return $this->json([
                 Response::HTTP_NOT_FOUND,
-                'content' => 'User not found'
+                'content' => 'User not found.'
             ]);
         }
     }
 
-    #[Route('api/dev/users/user/{id<\d+>}/edit/mail/{usermail<[\w\-\.]+@[\w-]+\.+[\w-]{2,4}>}', name:'dev_user_update-mail', methods:['PUT'])]
-    public function editUsermail(Request $request, string $id, string $usermail, UsersRepository $usersRepository, EntityManagerInterface $manager): JsonResponse
-    {
-        $user = $usersRepository->find($id);
-        if($user)
-        {
-            $oldMail = $user->getEmail();
-            $user->setEmail($usermail);
-
-            $manager->persist($user);
-            $manager->flush();
-            
-            return $this->json([
-                Response::HTTP_OK,
-                'content' => "User email $oldMail was changed with $usermail"
-            ]);
-        }
-        return $this->json([
-            Response::HTTP_NOT_FOUND,
-            'content' => "User not found."
-        ]);
-    }
-
-    #[Route('api/dev/users/user/{id<\d+>}/edit/password/{password<[-a-zA-Z0-9]{16,}>}', name:'dev_user_update_password', methods:['PUT'])]
-    public function editUserPassword(Request $request, string $id, string $password, UsersRepository $usersRepository, EntityManagerInterface $manager): JsonResponse
-    {
-        $user = $usersRepository->find($id);
-
-        if($user)
-        {
-            $user->setPassword($this->usersPasswordHasher->hashPassword($user,$password));
-
-            $manager->persist($user);
-            $manager->flush();
-
-            return $this->json([
-                Response::HTTP_OK,
-                'content' => 'User password was changed.'
-            ]);
-        }
-        return $this->json([
-            Response::HTTP_NOT_FOUND,
-            'content' => "User not found."
-        ]);
-    }
-
-    #[Route('api/dev/users/user/{id<\d+>}/delete', name:'delete_one_user', methods:['DELETE'])]
+    #[Route('api/dev/users/user/{id<\d+>}/delete', name:'dev-users-delete-one-user', methods:['DELETE'])]
     public function deleteUser(Request $request, string $id, UsersRepository $usersRepository, EntityManagerInterface $entityManagerInterface): JsonResponse
     {
         $user = $usersRepository->find($id);
@@ -155,7 +112,7 @@ class DevUsersController extends AbstractController
             'content' => 'User not found'
         ]);
     }
-    #[Route('api/dev/users/delete', name:'delete_all_users', methods:['DELETE'])]
+    #[Route('api/dev/users/delete', name:'dev-users-delete-all-users', methods:['DELETE'])]
     public function deleteAllUsers(UsersRepository $usersRepository, EntityManagerInterface $entityManagerInterface): JsonResponse
     {
         $users = $usersRepository->findAll();
