@@ -7,6 +7,7 @@ use App\Entity\Establishments;
 use App\Repository\UsersRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\EstablishmentsRepository;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,16 +30,32 @@ class DevEstablishmentsController extends AbstractController
         $this->serializer = new Serializer($this->normalizers,$this->encoders);
     }
 
-    #[Route('api/dev/establishments', name: 'dev_est_get-all-establishments')]
+    #[Route('api/dev/establishments', name: 'dev_est_get-all-establishments', methods:['GET'])]
     public function getAllEstablishments(EstablishmentsRepository $establishmentsRepository): JsonResponse
     {
         $establishments = $establishmentsRepository->findAll();
-        // dd($establishments);
-        if ($establishments) {
-            $data = $this->serializer->serialize($establishments, 'json');
+
+        if ($establishments)
+        {
+            $data = [];
+
+            foreach($establishments as $establishment)
+            {
+                $establishmentId = $establishment->getId();
+                $establishmentFk = $establishment->getFKUserId()->getId();
+                $establishmentsName = $establishment->getName();
+                array_push($data,[
+                    'id'=>$establishmentId,
+                    'fk_user_id' => $establishmentFk,
+                    'name'=>$establishmentsName
+                ]);
+            }
+            dd($data);
+            $jsonData = $this->serializer->serialize($data, 'json');
+
             return $this->json([
                 Response::HTTP_OK,
-                'content' =>  "$data"
+                'content' =>  "$jsonData"
             ]);
         }
         return $this->json([
@@ -50,19 +67,23 @@ class DevEstablishmentsController extends AbstractController
     public function addEstablishmentsToAllUsers(Request $request, int $number, UsersRepository $usersRepository, EntityManagerInterface $manager): JsonResponse
     {
         $users = $usersRepository->findAll();
-
+        
         if ($users) {
             $faker = Factory::create();
 
-            foreach ($users as $user) {
+            foreach ($users as $user)
+            {
+                for($i = 0; $i<$number; $i++)
+                {
 
-                dd ($user);
-                $establishments = new Establishments;
-                $establishments->setFKUserId($user)
+                    $establishments = new Establishments;
+                    
+                    $establishments->setFKUserId($user)
                     ->setName($faker->company());
-                $manager->persist($establishments);
+                    
+                    $manager->persist($establishments);
+                }
             }
-
             $manager->flush();
 
             return $this->json([
