@@ -3,6 +3,7 @@ namespace App\Controller\DevController;
 
 use Faker\Factory;
 use App\Entity\Users;
+use App\Repository\EstablishmentsRepository;
 use App\Repository\UsersRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Serializer\Serializer;
@@ -31,7 +32,8 @@ class DevUsersController extends AbstractController
         $this->serializer = new Serializer($this->normalizers,$this->encoders);
     }
 
-    #[Route('/api/dev/users', name: 'dev_users', methods: ['GET'])]
+
+    #[Route('/api/dev/users', name: 'dev_users_get', methods: ['GET'])]
     public function getUsers(UsersRepository $usersRepository): JsonResponse
     {
         $users = $usersRepository->findAll();
@@ -43,7 +45,7 @@ class DevUsersController extends AbstractController
         ]);
     }
 
-    #[Route('api/dev/users/create/{number<\d+>?10}', name: 'dev_users_create', methods: ['POST'])]
+    #[Route('api/dev/users/{number<\d+>?10}', name: 'dev_users_create', methods: ['POST'])]
     public function createUsers(Request $request, int $number, EntityManagerInterface $manager): JsonResponse
     {
         $faker = Factory::create('fr_FR');
@@ -61,61 +63,37 @@ class DevUsersController extends AbstractController
         $manager->flush();
 
         return $this->json([
-            Response::HTTP_OK, [], true,
+            Response::HTTP_CREATED, [], true,
             'content' => "$number users was created."
         ]);
     }
 
-    #[Route('api/dev/users/user/{id<\d+>}', name:'edit-user', methods:['PUT'])]
+    #[Route('api/dev/users/user/{id<\d+>}', name:'dev_users_edit-one', methods:['PUT'])]
     public function editUser(Request $request, int $id, UsersRepository $usersRepository, EntityManagerInterface $manager): JsonResponse
     {
         $currentUser = $usersRepository->find($id);
-        if($currentUser)
-        {
-            $jsonData = $request->getContent();
-            $updatedUser = $this->serializer->deserialize($jsonData, Users::class, 'json',
-                            [AbstractNormalizer::OBJECT_TO_POPULATE=>$currentUser]);
+        $jsonData = $request->getContent();
+        $updatedUser = $this->serializer->deserialize($jsonData, Users::class, 'json', [AbstractNormalizer::OBJECT_TO_POPULATE=>$currentUser]);
 
-            $manager->persist($updatedUser);
-            $manager->flush();
-            return $this->json([
-                Response::HTTP_NO_CONTENT,
-                null
-            ]);
-        }
-        else
-        {
-            return $this->json([
-                Response::HTTP_NOT_FOUND,
-                'content' => 'User not found.'
-            ]);
-        }
-    }
+        $manager->persist($updatedUser);
+        $manager->flush();
 
-    #[Route('api/dev/users/user/{id<\d+>}/delete', name:'dev-users-delete-one-user', methods:['DELETE'])]
-    public function deleteUser(Request $request, string $id, UsersRepository $usersRepository, EntityManagerInterface $entityManagerInterface): JsonResponse
-    {
-        $user = $usersRepository->find($id);
-
-        if ($user)
-        {
-            $usersRepository->remove($user);
-            $entityManagerInterface->flush();
-
-            return$this->json([
-                Response::HTTP_OK,
-                'content' => "User $id and all is data was deleted"
-            ]);
-        }
         return $this->json([
-            Response::HTTP_NOT_FOUND,
-            'content' => 'User not found'
+            Response::HTTP_NO_CONTENT,
+            null
         ]);
     }
-    #[Route('api/dev/users/delete', name:'dev-users-delete-all-users', methods:['DELETE'])]
-    public function deleteAllUsers(UsersRepository $usersRepository, EntityManagerInterface $entityManagerInterface): JsonResponse
+
+    #[Route('api/dev/users', name:'dev-users-delete', methods:['DELETE'])]
+    public function deleteAllUsers(UsersRepository $usersRepository, EstablishmentsRepository $establishmentsRepository, EntityManagerInterface $entityManagerInterface): JsonResponse
     {
         $users = $usersRepository->findAll();
+        $establishments = $establishmentsRepository->findAll();
+
+        foreach ($establishments as $establishment)
+        {
+            $establishmentsRepository->remove($establishment);
+        }
 
         foreach ($users as $user)
         {
@@ -124,8 +102,21 @@ class DevUsersController extends AbstractController
         $entityManagerInterface->flush();
 
         return $this->json([
-            Response::HTTP_OK,
-            'content' => 'All Users was deleted.'
+            Response::HTTP_NO_CONTENT,
+            null
+        ]);
+    }
+
+    #[Route('api/dev/users/user/{id<\d+>}', name:'dev-users-delete-one', methods:['DELETE'])]
+    public function deleteUser(Request $request, string $id, UsersRepository $usersRepository, EntityManagerInterface $entityManagerInterface): JsonResponse
+    {
+        $user = $usersRepository->find($id);
+
+        $usersRepository->remove($user);
+        $entityManagerInterface->flush();
+        return$this->json([
+            Response::HTTP_NO_CONTENT,
+            null
         ]);
     }
 }
