@@ -50,7 +50,7 @@ class UsersController extends AbstractController
             return new JsonResponse([
                 Response::HTTP_BAD_REQUEST,
                 [],
-                true,
+                false,
                 'errors' => "$errors"
             ]);
         }

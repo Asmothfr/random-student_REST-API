@@ -17,17 +17,21 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Assert\Email(message:"The email {{value}} is not a valid email.")]
+    #[Assert\Email(message:"The email is not valid.")]
     #[Assert\NotBlank(message:"Email is required.")]
     private ?string $email = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: "Roles is required.")]
     private array $roles = [];
 
     /**
      * @var string The hashed password
      */
     #[ORM\Column]
+    #[Assert\NotBlank(message: "Password is required.")]
+    #[Assert\Regex('/[-a-zA-Z0-9]/')]
+    #[Assert\Length(min: 16, max:255, minMessage: 'Password must be at least 16 characters long', maxMessage: 'Password cannot be longer than 255 characters',)]
     private ?string $password = null;
 
     #[ORM\Column(length: 31)]
