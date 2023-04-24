@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Symfony\Component\Validator\Constraints as Assert;
 use App\Repository\StudentsRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -18,9 +19,12 @@ class Students
     private ?Classrooms $FK_classroom = null;
 
     #[ORM\Column(length: 31, nullable: true)]
+    #[Assert\Regex('/[-a-zA-Z]/')]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 31)]
+    #[Assert\Regex('/[-a-zA-Z]/')]
+    #[Assert\NotBlank(message:'First name is required')]
     private ?string $firstname = null;
 
     #[ORM\Column]

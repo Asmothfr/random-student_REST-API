@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Symfony\Component\Validator\Constraints as Assert;
 use App\Repository\ClassroomsRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -20,6 +21,8 @@ class Classrooms
     private ?Establishments $FK_establishment = null;
 
     #[ORM\Column(length: 127)]
+    #[Assert\NotBlank(message:'Name is required.')]
+    #[Assert\Regex('/[-a-zA-Z0-9]/')]
     private ?string $name = null;
 
     #[ORM\OneToMany(mappedBy: 'FK_classroom', targetEntity: Students::class, orphanRemoval: true)]
