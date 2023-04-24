@@ -7,27 +7,20 @@ use App\Entity\Establishments;
 use App\Repository\UsersRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\EstablishmentsRepository;
-use Symfony\Bridge\Doctrine\Attribute\MapEntity;
-use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class DevEstablishmentsController extends AbstractController
 {
-    private Serializer $serializer;
-    private array $encoders;
-    private array $normalizers;
+    private SerializerInterface $serializer;
 
-    public function __construct()
+    public function __construct(SerializerInterface $serializerInterface)
     {
-        $this->encoders[] = new JsonEncoder();
-        $this->normalizers[] = new ObjectNormalizer();
-        $this->serializer = new Serializer($this->normalizers,$this->encoders);
+        $this->serializer = $serializerInterface;
     }
 
     #[Route('api/dev/establishments', name: 'dev_est_get-all-establishments', methods:['GET'])]

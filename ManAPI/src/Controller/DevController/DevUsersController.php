@@ -3,33 +3,27 @@ namespace App\Controller\DevController;
 
 use Faker\Factory;
 use App\Entity\Users;
-use App\Repository\EstablishmentsRepository;
 use App\Repository\UsersRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Serializer\Serializer;
+use App\Repository\EstablishmentsRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
 class DevUsersController extends AbstractController
 {
     private UserPasswordHasherInterface $usersPasswordHasher;
-    private Serializer $serializer;
-    private array $encoders;
-    private array $normalizers;
+    private SerializerInterface $serializer;
 
-    public function __construct(UserPasswordHasherInterface $usersPasswordHasher)
+    public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface)
     {
         $this->usersPasswordHasher = $usersPasswordHasher;
-        $this->encoders[] = new JsonEncoder();
-        $this->normalizers[] = new ObjectNormalizer();
-        $this->serializer = new Serializer($this->normalizers,$this->encoders);
+        $this->serializer = $serializerInterface;
     }
 
 

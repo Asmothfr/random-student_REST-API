@@ -5,34 +5,24 @@ namespace App\Controller;
 use App\Entity\Users;
 use App\Repository\UsersRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Serializer\Context\Normalizer\ObjectNormalizerContextBuilder;
-use Symfony\Component\Serializer\Annotation\Groups;
-use Symfony\Component\Serializer\Context\SerializerContextBuilder;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class UsersController extends AbstractController
 {
     private UserPasswordHasherInterface $usersPasswordHasher;
-    private Serializer $serializer;
-    private array $encoders;
-    private array $normalizers;
+    private SerializerInterface $serializer;
 
-    public function __construct(UserPasswordHasherInterface $usersPasswordHasher)
+    public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface)
     {
         $this->usersPasswordHasher = $usersPasswordHasher;
-        $this->encoders[] = new JsonEncoder();
-        $this->normalizers[] = new ObjectNormalizer();
-        $this->serializer = new Serializer($this->normalizers, $this->encoders);
+        $this->serializer = $serializerInterface;
     }
 
 
@@ -42,9 +32,7 @@ class UsersController extends AbstractController
         $currentUser = $usersRepository->find($id);
         if($currentUser)
         {
-            $context = new SerializerContextBuilder();
-            $context->withContext(['user_identity']);
-            $userJsonFormat = $this->serializer->serialize($currentUser, 'json', [$context]);
+            $userJsonFormat = $this->serializer->serialize($currentUser, 'json', ['groups'=>'user_identity']);
 
             return new JsonResponse($userJsonFormat, Response::HTTP_OK, [], true,);
         }
@@ -56,7 +44,7 @@ class UsersController extends AbstractController
     }
 
     #[Route('api/users/user', name:"users_create-user", methods:['POST'])]
-    public function createUser(Request $request, EntityManagerInterface $em, ValidatorInterface $validator,) : JsonResponse
+    public function createUser(Request $request, EntityManagerInterface $em, ValidatorInterface $validator) : JsonResponse
     {
         $userInfoJson = $request->getContent();
         $user = $this->serializer->deserialize($userInfoJson, Users::class,'json');
