@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Users;
+use App\Repository\UsersRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,6 +16,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Serializer\Context\Normalizer\ObjectNormalizerContextBuilder;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Context\SerializerContextBuilder;
 
 class UsersController extends AbstractController
 {
@@ -32,9 +36,23 @@ class UsersController extends AbstractController
     }
 
 
-    public function login()
+    #[Route('api/users/{id<\d+>}/identity', name:'users_get-current-user', methods:['GET'])]
+    public function getUserIdentity(Request $request, string $id, UsersRepository $usersRepository): JsonResponse
     {
+        $currentUser = $usersRepository->find($id);
+        if($currentUser)
+        {
+            $context = new SerializerContextBuilder();
+            $context->withContext(['user_identity']);
+            $userJsonFormat = $this->serializer->serialize($currentUser, 'json', [$context]);
 
+            return new JsonResponse($userJsonFormat, Response::HTTP_OK, [], true,);
+        }
+        return new JsonResponse([
+            Response::HTTP_NOT_FOUND,
+            [],
+            false,
+        ]);
     }
 
     #[Route('api/users/user', name:"users_create-user", methods:['POST'])]
@@ -47,12 +65,12 @@ class UsersController extends AbstractController
         if($errors->count() > 0)
         {
             $errors = $this->serializer->serialize($errors, 'json');
-            return new JsonResponse([
+            return new JsonResponse(
+                $errors,
                 Response::HTTP_BAD_REQUEST,
                 [],
-                false,
-                'errors' => "$errors"
-            ]);
+                false
+            );
         }
         
         $password = $user->getPassword();

@@ -50,18 +50,12 @@ class DevEstablishmentsController extends AbstractController
                     'name'=>$establishmentsName
                 ]);
             }
-            dd($data);
+
             $jsonData = $this->serializer->serialize($data, 'json');
 
-            return $this->json([
-                Response::HTTP_OK,
-                'content' =>  "$jsonData"
-            ]);
+            return new JsonResponse($jsonData, Response::HTTP_OK, [], true);
         }
-        return $this->json([
-            Response::HTTP_NOT_FOUND,
-            'content' => 'No establishments in db.'
-        ]);
+        return new JsonResponse(null, Response::HTTP_NOT_FOUND, [] ,false);
     }
     #[Route('api/dev/establishments/create/{number<\d>?3}', name: 'dev_est_add-establishments-all-users', methods: ['GET'])]
     public function addEstablishmentsToAllUsers(Request $request, int $number, UsersRepository $usersRepository, EntityManagerInterface $manager): JsonResponse
@@ -86,15 +80,9 @@ class DevEstablishmentsController extends AbstractController
             }
             $manager->flush();
 
-            return $this->json([
-                Response::HTTP_OK,
-                'content' => "$number Establishments was added to each users."
-            ]);
+            return new JsonResponse ($number, Response::HTTP_OK, [], true);
         } else {
-            return $this->json([
-                Response::HTTP_NOT_FOUND,
-                'content' => 'no users in db, add establishments is impossible.'
-            ]);
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
         }
     }
 }

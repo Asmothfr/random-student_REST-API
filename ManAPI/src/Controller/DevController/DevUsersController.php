@@ -39,10 +39,7 @@ class DevUsersController extends AbstractController
         $users = $usersRepository->findAll();
         
         $JsonContent = $this->serializer->serialize($users, 'json');
-        return $this->json([
-            Response::HTTP_OK, [], true,
-            $JsonContent
-        ]);
+        return new JsonResponse($JsonContent,Response::HTTP_OK, [], true);
     }
 
     #[Route('api/dev/users/{number<\d+>?10}', name: 'dev_users_create', methods: ['POST'])]
@@ -62,10 +59,7 @@ class DevUsersController extends AbstractController
         
         $manager->flush();
 
-        return $this->json([
-            Response::HTTP_CREATED, [], true,
-            'content' => "$number users was created."
-        ]);
+        return new JsonResponse(null, Response::HTTP_CREATED, [], false);
     }
 
     #[Route('api/dev/users/user/{id<\d+>}', name:'dev_users_edit-one', methods:['PUT'])]
@@ -78,10 +72,7 @@ class DevUsersController extends AbstractController
         $manager->persist($updatedUser);
         $manager->flush();
 
-        return $this->json([
-            Response::HTTP_NO_CONTENT,
-            null
-        ]);
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
     #[Route('api/dev/users', name:'dev-users-delete', methods:['DELETE'])]
@@ -101,10 +92,7 @@ class DevUsersController extends AbstractController
         }
         $entityManagerInterface->flush();
 
-        return $this->json([
-            Response::HTTP_NO_CONTENT,
-            null
-        ]);
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
     #[Route('api/dev/users/user/{id<\d+>}', name:'dev-users-delete-one', methods:['DELETE'])]
@@ -114,9 +102,6 @@ class DevUsersController extends AbstractController
 
         $usersRepository->remove($user);
         $entityManagerInterface->flush();
-        return$this->json([
-            Response::HTTP_NO_CONTENT,
-            null
-        ]);
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 }
