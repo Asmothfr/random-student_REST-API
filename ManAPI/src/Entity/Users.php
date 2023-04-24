@@ -37,7 +37,7 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 31)]
     #[Assert\NotBlank(message: "Name is required.")]
     #[Assert\Regex('/[-a-zA-Z0-9]/')]
-    #[Assert\Length(min: 8, max:32, minMessage: 'Password must be at least 8 characters long', maxMessage: 'Password cannot be longer than 32 characters',)]
+    #[Assert\Length(min: 8, max:32, minMessage: 'Name must be at least 8 characters long', maxMessage: 'Name cannot be longer than 32 characters',)]
     private ?string $name = null;
 
     public function getId(): ?int
