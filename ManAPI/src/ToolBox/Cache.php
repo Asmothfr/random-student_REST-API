@@ -25,13 +25,11 @@ class Cache
 
         if($cacheItemValue != null)
         {
-            echo('cache ok');
             $jsonContent = $cacheItemValue;
             return $jsonContent;
         }
         else
         {
-            echo('cache pas ok');
             $entity = $repository->$repositoryMethod($id);
             $jsonContent = $this->_serializer->serialize($entity, 'json');
             $cacheItem->set($jsonContent);
