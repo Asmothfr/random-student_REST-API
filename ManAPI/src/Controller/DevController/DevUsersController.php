@@ -30,14 +30,22 @@ class DevUsersController extends AbstractController
     }
 
 
-    #[Route('/api/dev/users', name: 'dev_users_get', methods: ['GET'])]
-    public function getUsers(UsersRepository $usersRepository): JsonResponse
+    #[Route('/api/dev/users/{id<\d+>?null}', name: 'dev_users_get', methods: ['GET'])]
+    public function getUsers(Request $request, mixed $id, UsersRepository $usersRepository): JsonResponse
     {
-        $jsonContent = $this->cache->getCache('allUsers', $usersRepository, 'findAll');
+        // dd($id);
+        if($id == "null" || $id == null)
+        {
+            $jsonContent = $this->cache->getCache('allUsers', $usersRepository, 'findAll');
+        }
+        else
+        {
+            $jsonContent = $this->cache->getCache("oneUser"."$id", $usersRepository, "find", $id);
+        }
 
         return new JsonResponse($jsonContent,Response::HTTP_OK, [], true);
     }
-
+    
     #[Route('api/dev/users/{number<\d+>?10}', name: 'dev_users_create', methods: ['POST'])]
     public function createUsers(Request $request, int $number, EntityManagerInterface $manager): JsonResponse
     {
