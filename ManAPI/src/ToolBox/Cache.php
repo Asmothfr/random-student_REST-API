@@ -17,7 +17,7 @@ class Cache
         $this->_serializer = $serializerInterface;
     }
 
-    public function getCache(string $cacheItemKey, ServiceEntityRepository $repository, string $repositoryMethod): string
+    public function getCache(string $cacheItemKey, ServiceEntityRepository $repository, string $repositoryMethod, int $id = null): string
     {
         $cacheItem = $this->_cache->getItem($cacheItemKey);
 
@@ -32,7 +32,7 @@ class Cache
         else
         {
             echo('cache pas ok');
-            $entity = $repository->$repositoryMethod();
+            $entity = $repository->$repositoryMethod($id);
             $jsonContent = $this->_serializer->serialize($entity, 'json');
             $cacheItem->set($jsonContent);
             $this->_cache->save($cacheItem);
