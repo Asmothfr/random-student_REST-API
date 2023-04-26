@@ -21,12 +21,13 @@ class UsersController extends AbstractController
 
     public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface)
     {
+
         $this->usersPasswordHasher = $usersPasswordHasher;
         $this->serializer = $serializerInterface;
     }
 
 
-    #[Route('api/users/{id<\d+>}/identity', name:'users_get-current-user', methods:['GET'])]
+    #[Route('api/users/{id<\d+>}', name:'users_get-current-user', methods:['GET'])]
     public function getUserIdentity(Request $request, string $id, UsersRepository $usersRepository): JsonResponse
     {
         $currentUser = $usersRepository->find($id);
@@ -43,7 +44,7 @@ class UsersController extends AbstractController
         ]);
     }
 
-    #[Route('api/users/user', name:"users_create-user", methods:['POST'])]
+    #[Route('api/users/', name:"users_create-user", methods:['POST'])]
     public function createUser(Request $request, EntityManagerInterface $em, ValidatorInterface $validator) : JsonResponse
     {
         $userInfoJson = $request->getContent();

@@ -6,6 +6,7 @@ use App\Entity\Users;
 use App\Repository\UsersRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\EstablishmentsRepository;
+use App\ToolBox\Cache;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -19,21 +20,22 @@ class DevUsersController extends AbstractController
 {
     private UserPasswordHasherInterface $usersPasswordHasher;
     private SerializerInterface $serializer;
+    private Cache $cache;
 
-    public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface)
+    public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface, Cache $cacheClass)
     {
         $this->usersPasswordHasher = $usersPasswordHasher;
         $this->serializer = $serializerInterface;
+        $this->cache = $cacheClass;
     }
 
 
     #[Route('/api/dev/users', name: 'dev_users_get', methods: ['GET'])]
     public function getUsers(UsersRepository $usersRepository): JsonResponse
     {
-        $users = $usersRepository->findAll();
-        
-        $JsonContent = $this->serializer->serialize($users, 'json');
-        return new JsonResponse($JsonContent,Response::HTTP_OK, [], true);
+        $jsonContent = $this->cache->getCache('allUsers', $usersRepository, 'findAll');
+
+        return new JsonResponse($jsonContent,Response::HTTP_OK, [], true);
     }
 
     #[Route('api/dev/users/{number<\d+>?10}', name: 'dev_users_create', methods: ['POST'])]
