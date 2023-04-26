@@ -2,9 +2,9 @@
 
 namespace App\ToolBox;
 
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Psr\Cache\CacheItemPoolInterface;
-use Symfony\Component\Serializer\SerializerInterface;
+use JMS\Serializer\SerializerInterface;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 class Cache
 {
@@ -17,7 +17,7 @@ class Cache
         $this->_serializer = $serializerInterface;
     }
 
-    public function getCache(string $cacheItemKey, ServiceEntityRepository $repository, string $repositoryMethod, int $id = null): string
+    public function getCache(string $cacheItemKey, ServiceEntityRepository $repository, string $repositoryMethod, ?int $id = null): string
     {
         $cacheItem = $this->_cache->getItem($cacheItemKey);
 

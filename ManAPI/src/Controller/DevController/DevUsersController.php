@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\SerializerInterface;
+use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -63,7 +63,13 @@ class DevUsersController extends AbstractController
     {
         $currentUser = $usersRepository->find($id);
         $jsonData = $request->getContent();
-        $updatedUser = $this->serializer->deserialize($jsonData, Users::class, 'json', [AbstractNormalizer::OBJECT_TO_POPULATE=>$currentUser]);
+
+        $newUser = $this->serializer->deserialize($jsonData, Users::class, 'json');
+
+        $updatedUser = $currentUser->setEmail($newUser->getTitle())
+                                    ->setName($newUser->getName())
+                                    ->setPassword($newUser->getPassword())
+                                    ->setRoles($newUser->getRoles());
 
         $manager->persist($updatedUser);
         $manager->flush();

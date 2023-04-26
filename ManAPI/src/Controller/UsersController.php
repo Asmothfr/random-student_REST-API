@@ -4,7 +4,9 @@ namespace App\Controller;
 
 use App\Entity\Users;
 use App\Repository\UsersRepository;
+use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use JMS\Serializer\SerializationContext;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -12,7 +14,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Serializer\SerializerInterface;
 
 class UsersController extends AbstractController
 {
@@ -33,7 +34,8 @@ class UsersController extends AbstractController
         $currentUser = $usersRepository->find($id);
         if($currentUser)
         {
-            $userJsonFormat = $this->serializer->serialize($currentUser, 'json', ['groups'=>'user_identity']);
+            $context = SerializationContext::create()->setGroups(['user_identity']);
+            $userJsonFormat = $this->serializer->serialize($currentUser, 'json', $context);
 
             return new JsonResponse($userJsonFormat, Response::HTTP_OK, [], true,);
         }
