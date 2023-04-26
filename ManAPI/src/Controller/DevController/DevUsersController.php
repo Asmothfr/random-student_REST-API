@@ -6,13 +6,12 @@ use App\Entity\Users;
 use App\Repository\UsersRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\EstablishmentsRepository;
-use App\ToolBox\Cache;
+use App\Service\CacheService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use JMS\Serializer\SerializerInterface;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -20,9 +19,9 @@ class DevUsersController extends AbstractController
 {
     private UserPasswordHasherInterface $usersPasswordHasher;
     private SerializerInterface $serializer;
-    private Cache $cache;
+    private CacheService $cache;
 
-    public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface, Cache $cacheClass)
+    public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface, CacheService $cacheClass)
     {
         $this->usersPasswordHasher = $usersPasswordHasher;
         $this->serializer = $serializerInterface;
@@ -33,7 +32,6 @@ class DevUsersController extends AbstractController
     #[Route('/api/dev/users/{id<\d+>?null}', name: 'dev_users_get', methods: ['GET'])]
     public function getUsers(Request $request, mixed $id, UsersRepository $usersRepository): JsonResponse
     {
-        // dd($id);
         if($id == "null" || $id == null)
         {
             $jsonContent = $this->cache->getCache('allUsers', $usersRepository, 'findAll');
