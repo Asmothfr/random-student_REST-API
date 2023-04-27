@@ -44,4 +44,15 @@ class CacheService
             return $jsonContent;
         }
     }
+
+    public function clearAllCache():void
+    {
+        $this->_cache->clear();
+    }
+
+    public function clearCacheItem(string $cacheItemName, string $id)
+    {
+        $cacheItemKey = $cacheItemName.$id;
+        $this->_cache->deleteItem($cacheItemKey);
+    }
 }

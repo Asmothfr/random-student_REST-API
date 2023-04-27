@@ -41,12 +41,13 @@ class DevUsersController extends AbstractController
      *      )
      * )
      * @OA\Tag(name="Dev-Users")
-     * @param int $id
+     * @param Request $request
+     * @param string $id
      * @param UsersRepository $usersRespository
      * @return JsonResponse
      */
     #[Route('/api/dev/users/{id<\d+>?null}', name: 'dev_users_get', methods: ['GET'])]
-    public function getUsers(Request $request, int $id, UsersRepository $usersRepository): JsonResponse
+    public function getUsers(Request $request, string $id, UsersRepository $usersRepository): JsonResponse
     {
         if($id == "null" || $id == null)
         {
@@ -70,12 +71,13 @@ class DevUsersController extends AbstractController
      *      )
      * )
      * @OA\Tag(name="Dev-Users")
-     * @param int $number
+     * @param Request $request
+     * @param string $number
      * @param EntityManagerInterface $manager
      * @return JsonResponse
      */
     #[Route('api/dev/users/{number<\d+>?10}', name: 'dev_users_create', methods: ['POST'])]
-    public function createUsers(Request $request, int $number, EntityManagerInterface $manager): JsonResponse
+    public function createUsers(Request $request, string $number, EntityManagerInterface $manager): JsonResponse
     {
         $faker = Factory::create('fr_FR');
         $hasher = $this->usersPasswordHasher;
@@ -104,13 +106,14 @@ class DevUsersController extends AbstractController
      *      )
      * )
      * @OA\Tag(name="Dev-Users")
-     * @param int $id
+     * @param Request $request
+     * @param string $id
      * @param UsersRepository $usersRepository
      * @param EntityManagerInterface $manager
      * @return JsonResponse
      */
     #[Route('api/dev/users/{id<\d+>}', name:'dev_users_edit-one', methods:['PUT'])]
-    public function editUser(Request $request, int $id, UsersRepository $usersRepository, EntityManagerInterface $manager): JsonResponse
+    public function editUser(Request $request, string $id, UsersRepository $usersRepository, EntityManagerInterface $manager): JsonResponse
     {
         $currentUser = $usersRepository->find($id);
         $jsonData = $request->getContent();
@@ -131,45 +134,53 @@ class DevUsersController extends AbstractController
     /**
      * @OA\Response(
      *      response=204,
-     *      description = "Delete all users in database.",
+     *      description = "Delete all users in database. Delete one user if the id is given.",
      *      @OA\JsonContent(
      *          type="array",
      *      @OA\Items(ref=@Model(type=Users::class))
      *      )
      * )
      * @OA\Tag(name="Dev-Users")
+     * @param Request $request
+     * @param string $id
      * @param UsersRepository $usersRepository
      * @param EstablishmentsRepository $establishmentsRepository
      * @param EntityManagerInterface $entityManagerInterface
      * @return JsonResponse
      */
-    #[Route('api/dev/users', name:'dev-users-delete', methods:['DELETE'])]
-    public function deleteAllUsers(UsersRepository $usersRepository, EstablishmentsRepository $establishmentsRepository, EntityManagerInterface $entityManagerInterface): JsonResponse
+    #[Route('api/dev/users/{id<\d+>?null}', name:'dev-users-delete', methods:['DELETE'])]
+    public function deleteAllUsers(Request $request, string $id, UsersRepository $usersRepository, EstablishmentsRepository $establishmentsRepository, EntityManagerInterface $entityManagerInterface): JsonResponse
     {
-        $users = $usersRepository->findAll();
-        $establishments = $establishmentsRepository->findAll();
-
-        foreach ($establishments as $establishment)
+        if ($id == null)
         {
-            $establishmentsRepository->remove($establishment);
+            $users = $usersRepository->findAll();
+            $establishments = $establishmentsRepository->findAll();
+            
+            foreach ($establishments as $establishment)
+            {
+                $establishmentsRepository->remove($establishment);
+            }
+            
+            foreach ($users as $user)
+            {
+                $usersRepository->remove($user);
+            }
         }
-
-        foreach ($users as $user)
+        else
         {
+            $user = $usersRepository->find($id);
+            $establishments = $establishmentsRepository->findBy(['FK_user'=>$id]);
+            dd($establishments);
+
+            foreach ($establishments as $establishment)
+            {
+                $establishmentsRepository->remove($establishment);
+            }
+
             $usersRepository->remove($user);
         }
         $entityManagerInterface->flush();
-
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
-    }
-
-    #[Route('api/dev/users/{id<\d+>}', name:'dev-users-delete-one', methods:['DELETE'])]
-    public function deleteUser(Request $request, string $id, UsersRepository $usersRepository, EntityManagerInterface $entityManagerInterface): JsonResponse
-    {
-        $user = $usersRepository->find($id);
-
-        $usersRepository->remove($user);
-        $entityManagerInterface->flush();
+        $this->cache->clearAllCache();
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 }
