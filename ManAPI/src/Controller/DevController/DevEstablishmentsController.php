@@ -50,7 +50,7 @@ class DevEstablishmentsController extends AbstractController
         }
         return new JsonResponse(null, Response::HTTP_NOT_FOUND, [] ,false);
     }
-    #[Route('api/dev/establishments/create/{number<\d>?3}', name: 'dev_est_add-establishments-all-users', methods: ['GET'])]
+    #[Route('api/dev/establishments/{number<\d>?3}', name: 'dev_est_add-establishments-all-users', methods: ['POST'])]
     public function addEstablishmentsToAllUsers(Request $request, int $number, UsersRepository $usersRepository, EntityManagerInterface $manager): JsonResponse
     {
         $users = $usersRepository->findAll();

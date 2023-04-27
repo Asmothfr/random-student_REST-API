@@ -14,6 +14,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
 
 class DevUsersController extends AbstractController
 {
@@ -28,9 +31,22 @@ class DevUsersController extends AbstractController
         $this->cache = $cacheClass;
     }
 
-
+    /**
+     * @OA\Response(
+     *      response=200,
+     *      description = "Get all users in database. Get one user if the id is given.",
+     *      @OA\JsonContent(
+     *          type="array",
+     *      @OA\Items(ref=@Model(type=Users::class))
+     *      )
+     * )
+     * @OA\Tag(name="Dev-Users")
+     * @param int $id
+     * @param UsersRepository $usersRespository
+     * @return JsonResponse
+     */
     #[Route('/api/dev/users/{id<\d+>?null}', name: 'dev_users_get', methods: ['GET'])]
-    public function getUsers(Request $request, mixed $id, UsersRepository $usersRepository): JsonResponse
+    public function getUsers(Request $request, int $id, UsersRepository $usersRepository): JsonResponse
     {
         if($id == "null" || $id == null)
         {
@@ -44,6 +60,20 @@ class DevUsersController extends AbstractController
         return new JsonResponse($jsonContent,Response::HTTP_OK, [], true);
     }
     
+    /**
+     * @OA\Response(
+     *      response=201,
+     *      description = "Create x numbers of users in database.",
+     *      @OA\JsonContent(
+     *          type="array",
+     *      @OA\Items(ref=@Model(type=Users::class))
+     *      )
+     * )
+     * @OA\Tag(name="Dev-Users")
+     * @param int $number
+     * @param EntityManagerInterface $manager
+     * @return JsonResponse
+     */
     #[Route('api/dev/users/{number<\d+>?10}', name: 'dev_users_create', methods: ['POST'])]
     public function createUsers(Request $request, int $number, EntityManagerInterface $manager): JsonResponse
     {
@@ -64,7 +94,22 @@ class DevUsersController extends AbstractController
         return new JsonResponse(null, Response::HTTP_CREATED, [], false);
     }
 
-    #[Route('api/dev/users/user/{id<\d+>}', name:'dev_users_edit-one', methods:['PUT'])]
+    /**
+     * @OA\Response(
+     *      response=204,
+     *      description = "Edit one user in database.",
+     *      @OA\JsonContent(
+     *          type="array",
+     *      @OA\Items(ref=@Model(type=Users::class))
+     *      )
+     * )
+     * @OA\Tag(name="Dev-Users")
+     * @param int $id
+     * @param UsersRepository $usersRepository
+     * @param EntityManagerInterface $manager
+     * @return JsonResponse
+     */
+    #[Route('api/dev/users/{id<\d+>}', name:'dev_users_edit-one', methods:['PUT'])]
     public function editUser(Request $request, int $id, UsersRepository $usersRepository, EntityManagerInterface $manager): JsonResponse
     {
         $currentUser = $usersRepository->find($id);
@@ -83,6 +128,21 @@ class DevUsersController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
+    /**
+     * @OA\Response(
+     *      response=204,
+     *      description = "Delete all users in database.",
+     *      @OA\JsonContent(
+     *          type="array",
+     *      @OA\Items(ref=@Model(type=Users::class))
+     *      )
+     * )
+     * @OA\Tag(name="Dev-Users")
+     * @param UsersRepository $usersRepository
+     * @param EstablishmentsRepository $establishmentsRepository
+     * @param EntityManagerInterface $entityManagerInterface
+     * @return JsonResponse
+     */
     #[Route('api/dev/users', name:'dev-users-delete', methods:['DELETE'])]
     public function deleteAllUsers(UsersRepository $usersRepository, EstablishmentsRepository $establishmentsRepository, EntityManagerInterface $entityManagerInterface): JsonResponse
     {
@@ -103,7 +163,7 @@ class DevUsersController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
-    #[Route('api/dev/users/user/{id<\d+>}', name:'dev-users-delete-one', methods:['DELETE'])]
+    #[Route('api/dev/users/{id<\d+>}', name:'dev-users-delete-one', methods:['DELETE'])]
     public function deleteUser(Request $request, string $id, UsersRepository $usersRepository, EntityManagerInterface $entityManagerInterface): JsonResponse
     {
         $user = $usersRepository->find($id);
