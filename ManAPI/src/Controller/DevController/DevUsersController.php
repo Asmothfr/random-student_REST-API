@@ -20,15 +20,15 @@ use OpenApi\Annotations as OA;
 
 class DevUsersController extends AbstractController
 {
-    private UserPasswordHasherInterface $usersPasswordHasher;
-    private SerializerInterface $serializer;
-    private CacheService $cache;
+    private UserPasswordHasherInterface $_usersPasswordHasher;
+    private SerializerInterface $_serializer;
+    private CacheService $_cache;
 
     public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface, CacheService $cacheClass)
     {
-        $this->usersPasswordHasher = $usersPasswordHasher;
-        $this->serializer = $serializerInterface;
-        $this->cache = $cacheClass;
+        $this->_usersPasswordHasher = $usersPasswordHasher;
+        $this->_serializer = $serializerInterface;
+        $this->_cache = $cacheClass;
     }
 
     /**
@@ -48,14 +48,14 @@ class DevUsersController extends AbstractController
      */
     #[Route('/api/dev/users/{id<\d+>?null}', name: 'dev_users_get', methods: ['GET'])]
     public function getUsers(Request $request, string $id, UsersRepository $usersRepository): JsonResponse
-    {
+    {        
         if($id == "null" || $id == null)
         {
-            $jsonContent = $this->cache->getCache('allUsers', $usersRepository, 'findAll');
+            $jsonContent = $this->_cache->getCache('allUsers', $usersRepository, 'findAll');
         }
         else
         {
-            $jsonContent = $this->cache->getCache("oneUser"."$id", $usersRepository, "find", $id);
+            $jsonContent = $this->_cache->getCache("oneUser"."$id", $usersRepository, "find", $id);
         }
 
         return new JsonResponse($jsonContent,Response::HTTP_OK, [], true);
@@ -80,7 +80,7 @@ class DevUsersController extends AbstractController
     public function createUsers(Request $request, string $number, EntityManagerInterface $manager): JsonResponse
     {
         $faker = Factory::create('fr_FR');
-        $hasher = $this->usersPasswordHasher;
+        $hasher = $this->_usersPasswordHasher;
         for ($i = 0; $i < $number; $i++)
         {   
             $user = new Users;
@@ -118,7 +118,7 @@ class DevUsersController extends AbstractController
         $currentUser = $usersRepository->find($id);
         $jsonData = $request->getContent();
 
-        $newUser = $this->serializer->deserialize($jsonData, Users::class, 'json');
+        $newUser = $this->_serializer->deserialize($jsonData, Users::class, 'json');
 
         $updatedUser = $currentUser->setEmail($newUser->getTitle())
                                     ->setName($newUser->getName())
@@ -180,7 +180,7 @@ class DevUsersController extends AbstractController
             $usersRepository->remove($user);
         }
         $entityManagerInterface->flush();
-        $this->cache->clearAllCache();
+        $this->_cache->clearAllCache();
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 }
