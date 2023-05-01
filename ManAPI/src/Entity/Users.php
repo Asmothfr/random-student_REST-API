@@ -20,7 +20,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
  *          "dev_users_get",
  *          parameters = { "id" = "expr(object.getId())" }
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="user_identity")
+ *      exclusion = @Hateoas\Exclusion(groups="user_info")
  * )
  *
  */
@@ -31,13 +31,13 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["user_identity"])]
+    #[Groups(["user_info"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
     #[Assert\Email(message:"The email is not valid.")]
     #[Assert\NotBlank(message:"Email is required.")]
-    #[Groups(["user_identity"])]
+    #[Groups(["user_info"])]
     private ?string $email = null;
 
     /**

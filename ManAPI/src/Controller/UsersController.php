@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Users;
+use App\Repository\EstablishmentsRepository;
 use App\Repository\UsersRepository;
 use App\Service\CacheService;
 use JMS\Serializer\SerializerInterface;
@@ -21,7 +22,6 @@ class UsersController extends AbstractController
     private UserPasswordHasherInterface $_passwordHasher;
     private SerializerInterface $_serializer;
     private CacheService $_cache;
-
     public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface, CacheService $cacheService)
     {
 
@@ -31,8 +31,8 @@ class UsersController extends AbstractController
     }
 
 
-    #[Route('api/users/{id<\d+>}', name:'users_get-current-user', methods:['GET'])]
-    public function getUserIdentity(Request $request, string $id, UsersRepository $usersRepository): JsonResponse
+    #[Route('api/users/{id<\d+>}', name:'get-user', methods:['GET'])]
+    public function getCurrentUser(Request $request, string $id, UsersRepository $usersRepository): JsonResponse
     {
         $jsonContent = $this->_cache->getCache("user"."$id", $usersRepository, "find", $id);
         if($jsonContent)
@@ -42,7 +42,7 @@ class UsersController extends AbstractController
         return new JsonResponse([Response::HTTP_NOT_FOUND, [], false,]);
     }
 
-    #[Route('api/users', name:"users_create-user", methods:['POST'])]
+    #[Route('api/users', name:"create-user", methods:['POST'])]
     public function createUser(Request $request, EntityManagerInterface $em, ValidatorInterface $validator) : JsonResponse
     {
         $userInfoJson = $request->getContent();
@@ -68,5 +68,33 @@ class UsersController extends AbstractController
         $em->flush();
 
         return new JsonResponse([Response::HTTP_CREATED, [], true]);
+    }
+
+    #[Route('api/users/{id<\d+>}', name:'edit_user', methods:['PUT'])]
+    public function editUser(Request $request, string $id, UsersRepository $usersRepository, EntityManagerInterface $em): JsonResponse
+    {
+        $currentUser = $usersRepository->find($id);
+        $jsonData = $request->getContent();
+        $newUser = $this->_serializer->deserialize($jsonData, Users::class, 'json');
+
+        $updatedUser = $currentUser->setEmail($newUser->getTitle())
+                                    ->setName($newUser->getName())
+                                    ->setPassword($newUser->getPassword())
+                                    ->setRoles($newUser->getRoles());
+
+        $em->persist($updatedUser);
+        $em->flush();
+        $this->_cache->clearCacheItem('user',"$id");
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
+    }
+
+    public function deleteUser(Request $request, string $id, UsersRepository $usersRepository, EntityManagerInterface $em): JsonResponse
+    {
+        $user = $usersRepository->find($id);
+        $usersRepository->remove($user);
+        $em->flush();
+        $this->_cache->clearCacheItem('user',"$id");
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 }
