@@ -16,10 +16,6 @@ class Establishments
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'establishments')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Users $FK_user = null;
-
     #[ORM\Column(length: 63)]
     #[Assert\NotBlank(message:'Name is required.')]
     #[Assert\Regex('/[-a-zA-Z0-9]/')]
@@ -27,6 +23,10 @@ class Establishments
 
     #[ORM\OneToMany(mappedBy: 'FK_establishment', targetEntity: Classrooms::class, orphanRemoval: true)]
     private Collection $classrooms;
+
+    #[ORM\ManyToOne(inversedBy: 'establishments')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Users $FK_user = null;
 
     public function __construct()
     {
@@ -88,6 +88,18 @@ class Establishments
                 $classroom->setFKEstablishmentId(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getFKUser(): ?Users
+    {
+        return $this->FK_user;
+    }
+
+    public function setFKUser(?Users $FK_user): self
+    {
+        $this->FK_user = $FK_user;
 
         return $this;
     }

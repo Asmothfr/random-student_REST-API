@@ -49,6 +49,14 @@ class DevUsersController extends AbstractController
     #[Route('/api/dev/users/{id<\d+>?null}', name: 'dev_users_get', methods: ['GET'])]
     public function getUsers(Request $request, string $id, UsersRepository $usersRepository): JsonResponse
     {        
+        $token = $request->server->get('HTTP_AUTHORIZATION');
+        $trimed = trim($token, "bearer");
+        dump($trimed);
+        $tokenDecode = base64_decode($trimed);
+        dump($tokenDecode);
+        $tokenDeserialize = json_decode($tokenDecode);
+        dd($tokenDeserialize);
+
         if($id == "null" || $id == null)
         {
             $jsonContent = $this->_cache->getCache('allUsers', $usersRepository, 'findAll');
@@ -151,7 +159,7 @@ class DevUsersController extends AbstractController
     #[Route('api/dev/users/{id<\d+>?null}', name:'dev-users-delete', methods:['DELETE'])]
     public function deleteAllUsers(Request $request, string $id, UsersRepository $usersRepository, EstablishmentsRepository $establishmentsRepository, EntityManagerInterface $entityManagerInterface): JsonResponse
     {
-        if ($id == null)
+        if ($id == null || $id = "null")
         {
             $users = $usersRepository->findAll();
             $establishments = $establishmentsRepository->findAll();
@@ -170,7 +178,6 @@ class DevUsersController extends AbstractController
         {
             $user = $usersRepository->find($id);
             $establishments = $establishmentsRepository->findBy(['FK_user'=>$id]);
-            dd($establishments);
 
             foreach ($establishments as $establishment)
             {

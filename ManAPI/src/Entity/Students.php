@@ -30,6 +30,10 @@ class Students
     #[ORM\Column]
     private ?int $score = null;
 
+    #[ORM\ManyToOne(inversedBy: 'students')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Users $FK_user = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -79,6 +83,18 @@ class Students
     public function setScore(int $score): self
     {
         $this->score = $score;
+
+        return $this;
+    }
+
+    public function getFKUser(): ?Users
+    {
+        return $this->FK_user;
+    }
+
+    public function setFKUser(?Users $FK_user): self
+    {
+        $this->FK_user = $FK_user;
 
         return $this;
     }

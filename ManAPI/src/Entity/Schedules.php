@@ -27,6 +27,10 @@ class Schedules
     #[Assert\DateTime()]
     private ?\DateTimeInterface $end_time = null;
 
+    #[ORM\ManyToOne(inversedBy: 'schedules')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Users $FK_user = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -64,6 +68,18 @@ class Schedules
     public function setEndTime(\DateTimeInterface $end_time): self
     {
         $this->end_time = $end_time;
+
+        return $this;
+    }
+
+    public function getFKUser(): ?Users
+    {
+        return $this->FK_user;
+    }
+
+    public function setFKUser(?Users $FK_user): self
+    {
+        $this->FK_user = $FK_user;
 
         return $this;
     }

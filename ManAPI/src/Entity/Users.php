@@ -2,13 +2,16 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UsersRepository;
+use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\Annotation\Groups;
+use Hateoas\Configuration\Annotation as Hateoas;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Hateoas\Configuration\Annotation as Hateoas;
 
 /**
  * @Hateoas\Relation(
@@ -37,6 +40,9 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(["user_identity"])]
     private ?string $email = null;
 
+    /**
+     * @Type("array")
+     */
     #[ORM\Column]
     #[Assert\NotBlank(message: "Roles is required.")]
     private array $roles = [];
@@ -56,6 +62,26 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Length(min: 8, max:32, minMessage: 'Name must be at least 8 characters long', maxMessage: 'Name cannot be longer than 32 characters',)]
     #[Groups(["user_identity"])]
     private ?string $name = null;
+
+    #[ORM\OneToMany(mappedBy: 'FK_user', targetEntity: Classrooms::class, orphanRemoval: true)]
+    private Collection $classrooms;
+
+    #[ORM\OneToMany(mappedBy: 'FK_user', targetEntity: Students::class, orphanRemoval: true)]
+    private Collection $students;
+
+    #[ORM\OneToMany(mappedBy: 'FK_user', targetEntity: Schedules::class, orphanRemoval: true)]
+    private Collection $schedules;
+
+    #[ORM\OneToMany(mappedBy: 'FK_user', targetEntity: Establishments::class, orphanRemoval: true)]
+    private Collection $establishments;
+
+    public function __construct()
+    {
+        $this->classrooms = new ArrayCollection();
+        $this->students = new ArrayCollection();
+        $this->schedules = new ArrayCollection();
+        $this->establishments = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -135,6 +161,126 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     public function setName(string $name): self
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Classrooms>
+     */
+    public function getClassrooms(): Collection
+    {
+        return $this->classrooms;
+    }
+
+    public function addClassroom(Classrooms $classroom): self
+    {
+        if (!$this->classrooms->contains($classroom)) {
+            $this->classrooms->add($classroom);
+            $classroom->setFKUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeClassroom(Classrooms $classroom): self
+    {
+        if ($this->classrooms->removeElement($classroom)) {
+            // set the owning side to null (unless already changed)
+            if ($classroom->getFKUser() === $this) {
+                $classroom->setFKUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Students>
+     */
+    public function getStudents(): Collection
+    {
+        return $this->students;
+    }
+
+    public function addStudent(Students $student): self
+    {
+        if (!$this->students->contains($student)) {
+            $this->students->add($student);
+            $student->setFKUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeStudent(Students $student): self
+    {
+        if ($this->students->removeElement($student)) {
+            // set the owning side to null (unless already changed)
+            if ($student->getFKUser() === $this) {
+                $student->setFKUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Schedules>
+     */
+    public function getSchedules(): Collection
+    {
+        return $this->schedules;
+    }
+
+    public function addSchedule(Schedules $schedule): self
+    {
+        if (!$this->schedules->contains($schedule)) {
+            $this->schedules->add($schedule);
+            $schedule->setFKUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSchedule(Schedules $schedule): self
+    {
+        if ($this->schedules->removeElement($schedule)) {
+            // set the owning side to null (unless already changed)
+            if ($schedule->getFKUser() === $this) {
+                $schedule->setFKUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Establishments>
+     */
+    public function getEstablishments(): Collection
+    {
+        return $this->establishments;
+    }
+
+    public function addEstablishment(Establishments $establishment): self
+    {
+        if (!$this->establishments->contains($establishment)) {
+            $this->establishments->add($establishment);
+            $establishment->setFKUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeEstablishment(Establishments $establishment): self
+    {
+        if ($this->establishments->removeElement($establishment)) {
+            // set the owning side to null (unless already changed)
+            if ($establishment->getFKUser() === $this) {
+                $establishment->setFKUser(null);
+            }
+        }
 
         return $this;
     }

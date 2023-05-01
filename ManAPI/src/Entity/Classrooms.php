@@ -31,6 +31,10 @@ class Classrooms
     #[ORM\OneToMany(mappedBy: 'FK_classroom', targetEntity: Schedules::class, orphanRemoval: true)]
     private Collection $schedules;
 
+    #[ORM\ManyToOne(inversedBy: 'classrooms')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Users $FK_user = null;
+
     public function __construct()
     {
         $this->students = new ArrayCollection();
@@ -122,6 +126,18 @@ class Classrooms
                 $schedule->setFKClassroomId(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getFKUser(): ?Users
+    {
+        return $this->FK_user;
+    }
+
+    public function setFKUser(?Users $FK_user): self
+    {
+        $this->FK_user = $FK_user;
 
         return $this;
     }
