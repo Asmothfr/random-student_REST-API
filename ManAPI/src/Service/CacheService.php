@@ -26,7 +26,7 @@ class CacheService
      * @param ?int $resourceId 
      * @param ?SerializationContext $context
      */
-    public function getCache(string $cacheItemKey, ServiceEntityRepository $repository, string $repositoryMethod, ?int $resourceId = null, ?SerializationContext $context = null): string
+    public function getCache(string $cacheItemKey, ServiceEntityRepository $repository, string $repositoryMethod, ?int $resourceId = null, ?SerializationContext $context = null): ?string
     {
         $cacheItem = $this->_cache->getItem($cacheItemKey);
         $cacheItemValue = $cacheItem->get('value');
@@ -35,14 +35,17 @@ class CacheService
         {
             return $cacheItemValue;
         }
-        else
+
+        $entity = $repository->$repositoryMethod($resourceId);
+        if($entity != null)
         {
-            $entity = $repository->$repositoryMethod($resourceId);
             $jsonContent = $this->_serializer->serialize($entity, 'json', $context);
             $cacheItem->set($jsonContent);
             $this->_cache->save($cacheItem);
             return $jsonContent;
         }
+        
+        return null;
     }
 
     public function clearAllCache():void

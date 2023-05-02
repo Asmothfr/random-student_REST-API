@@ -17,7 +17,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
  * @Hateoas\Relation(
  *      "self",
  *      href = @Hateoas\Route(
- *          "dev_users_get",
+ *          "get_user",
  *          parameters = { "id" = "expr(object.getId())" }
  *      ),
  *      exclusion = @Hateoas\Exclusion(groups="user_info")

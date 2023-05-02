@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\Users;
-use App\Repository\EstablishmentsRepository;
 use App\Repository\UsersRepository;
 use App\Service\CacheService;
 use JMS\Serializer\SerializerInterface;
@@ -31,10 +30,11 @@ class UsersController extends AbstractController
     }
 
 
-    #[Route('api/users/{id<\d+>}', name:'get-user', methods:['GET'])]
+    #[Route('/api/users/{id<\d+>}', name: 'get_user', methods: ['GET'])]
     public function getCurrentUser(Request $request, string $id, UsersRepository $usersRepository): JsonResponse
     {
         $jsonContent = $this->_cache->getCache("user"."$id", $usersRepository, "find", $id);
+
         if($jsonContent)
         {
             return new JsonResponse($jsonContent, Response::HTTP_OK, [], true,);
@@ -42,7 +42,7 @@ class UsersController extends AbstractController
         return new JsonResponse([Response::HTTP_NOT_FOUND, [], false,]);
     }
 
-    #[Route('api/users', name:"create-user", methods:['POST'])]
+    #[Route('/api/users', name:"create_user", methods:['POST'])]
     public function createUser(Request $request, EntityManagerInterface $em, ValidatorInterface $validator) : JsonResponse
     {
         $userInfoJson = $request->getContent();
@@ -70,7 +70,7 @@ class UsersController extends AbstractController
         return new JsonResponse([Response::HTTP_CREATED, [], true]);
     }
 
-    #[Route('api/users/{id<\d+>}', name:'edit_user', methods:['PUT'])]
+    #[Route('/api/users/{id<\d+>}', name:'edit_user', methods:['PUT'])]
     public function editUser(Request $request, string $id, UsersRepository $usersRepository, EntityManagerInterface $em): JsonResponse
     {
         $currentUser = $usersRepository->find($id);
@@ -89,6 +89,7 @@ class UsersController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
+    #[Route('/api/users/{id<\d+>}', name: 'delete_user', methods:['DELETE'])]
     public function deleteUser(Request $request, string $id, UsersRepository $usersRepository, EntityManagerInterface $em): JsonResponse
     {
         $user = $usersRepository->find($id);
