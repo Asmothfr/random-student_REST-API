@@ -60,7 +60,7 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\NotBlank(message: "Name is required.")]
     #[Assert\Regex('/[-a-zA-Z0-9]/')]
     #[Assert\Length(min: 8, max:32, minMessage: 'Name must be at least 8 characters long', maxMessage: 'Name cannot be longer than 32 characters',)]
-    #[Groups(["user_identity"])]
+    #[Groups(["user_info"])]
     private ?string $name = null;
 
     #[ORM\OneToMany(mappedBy: 'FK_user', targetEntity: Classrooms::class, orphanRemoval: true)]
@@ -74,6 +74,8 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\OneToMany(mappedBy: 'FK_user', targetEntity: Establishments::class, orphanRemoval: true)]
     private Collection $establishments;
+
+    
 
     public function __construct()
     {
@@ -284,4 +286,5 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+
 }

@@ -2,11 +2,15 @@
 
 namespace App\Entity;
 
-use Symfony\Component\Validator\Constraints as Assert;
 use App\Repository\EstablishmentsRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation\Type;
+use JMS\Serializer\Annotation\Groups;
+use Hateoas\Configuration\Annotation as Hateoas;
+use Symfony\Component\Validator\Constraints as Assert;
+
 
 #[ORM\Entity(repositoryClass: EstablishmentsRepository::class)]
 class Establishments
@@ -28,6 +32,8 @@ class Establishments
     #[ORM\JoinColumn(nullable: false)]
     private ?Users $FK_user = null;
 
+
+
     public function __construct()
     {
         $this->classrooms = new ArrayCollection();
@@ -36,18 +42,6 @@ class Establishments
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getFKUserId(): ?Users
-    {
-        return $this->FK_user;
-    }
-
-    public function setFKUserId(?Users $FK_user): self
-    {
-        $this->FK_user = $FK_user;
-
-        return $this;
     }
 
     public function getName(): ?string

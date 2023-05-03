@@ -31,12 +31,14 @@ class CacheService extends AbstractController
         $cacheItemValue = $cacheItem->get('value');
 
         if($cacheItemValue != null)
-        {
+        {   
+            echo('cache');
             return $cacheItemValue;
         }
 
         $user = $this->getUser();
-        $jsonContent = $this->_serializer->serialize($user, 'json');
+        $context = SerializationContext::create()->setGroups(['user_info']);
+        $jsonContent = $this->_serializer->serialize($user, 'json', $context);
         $cacheItem->set($jsonContent);
         $this->_cache->save($cacheItem);
         return $jsonContent;

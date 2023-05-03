@@ -65,8 +65,8 @@ class UsersController extends AbstractController
 
     /**
      * @OA\Response(
-     *      response=201,
      *      description="Create a new user",
+     *      response=201,
      *      @OA\JsonContent(
      *          type="array",
      *          @OA\Items(ref=@Model(type=Users::class))
