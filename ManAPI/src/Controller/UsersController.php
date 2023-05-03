@@ -3,16 +3,17 @@
 namespace App\Controller;
 
 use App\Entity\Users;
-use App\Repository\UsersRepository;
 use App\Service\CacheService;
+use App\Repository\UsersRepository;
+use App\Service\ValidatorService;
 use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
+use PhpParser\Node\Expr\Instanceof_;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -21,43 +22,40 @@ class UsersController extends AbstractController
     private UserPasswordHasherInterface $_passwordHasher;
     private SerializerInterface $_serializer;
     private CacheService $_cache;
-    public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface, CacheService $cacheService)
-    {
+    private ValidatorService $_validator;
 
+    public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface, CacheService $cacheService, ValidatorService $validatorService )
+    {
         $this->_passwordHasher = $usersPasswordHasher;
         $this->_serializer = $serializerInterface;
         $this->_cache = $cacheService;
+        $this->_validator = $validatorService;
     }
 
 
-    #[Route('/api/users/{id<\d+>}', name: 'get_user', methods: ['GET'])]
-    public function getCurrentUser(Request $request, string $id, UsersRepository $usersRepository): JsonResponse
+    #[Route('/api/users', name: 'get_user', methods: ['GET'])]
+    public function getCurrentUser(Request $request): JsonResponse
     {
-        $jsonContent = $this->_cache->getCache("user"."$id", $usersRepository, "find", $id);
-
+        $token = $request->server->get('HTTP_AUTHORIZATION');
+        $jsonContent = $this->_cache->getUserCache($token);
+        
         if($jsonContent)
         {
             return new JsonResponse($jsonContent, Response::HTTP_OK, [], true,);
         }
-        return new JsonResponse([Response::HTTP_NOT_FOUND, [], false,]);
+        return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
     }
 
     #[Route('/api/users', name:"create_user", methods:['POST'])]
-    public function createUser(Request $request, EntityManagerInterface $em, ValidatorInterface $validator) : JsonResponse
+    public function createUser(Request $request, EntityManagerInterface $em) : JsonResponse
     {
         $userInfoJson = $request->getContent();
         $user = $this->_serializer->deserialize($userInfoJson, Users::class,'json');
-
-        $errors = $validator->validate($user);
-        if($errors->count() > 0)
+        
+        $isValidate = $this->_validator->validator($user);
+        if(!$isValidate)
         {
-            $errors = $this->_serializer->serialize($errors, 'json');
-            return new JsonResponse(
-                $errors,
-                Response::HTTP_BAD_REQUEST,
-                [],
-                false
-            );
+            return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
         }
         
         $password = $user->getPassword();
@@ -67,35 +65,56 @@ class UsersController extends AbstractController
         $em->persist($user);
         $em->flush();
 
-        return new JsonResponse([Response::HTTP_CREATED, [], true]);
+        return new JsonResponse(null, Response::HTTP_CREATED, [], false);
     }
 
-    #[Route('/api/users/{id<\d+>}', name:'edit_user', methods:['PUT'])]
-    public function editUser(Request $request, string $id, UsersRepository $usersRepository, EntityManagerInterface $em): JsonResponse
+    #[Route('/api/users', name:'edit_user', methods:['PUT'])]
+    public function editUser(Request $request, UsersRepository $usersRepository, EntityManagerInterface $em): JsonResponse
     {
-        $currentUser = $usersRepository->find($id);
         $jsonData = $request->getContent();
         $newUser = $this->_serializer->deserialize($jsonData, Users::class, 'json');
 
-        $updatedUser = $currentUser->setEmail($newUser->getTitle())
-                                    ->setName($newUser->getName())
-                                    ->setPassword($newUser->getPassword())
-                                    ->setRoles($newUser->getRoles());
+        $isValidate = $this->_validator->validator($newUser);
+        if(!$isValidate)
+        {
+            return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
+        }
+        
+        $token = $request->server->get('HTTP_AUTHORIZATION');
+        $currentUser = $this->getUser();
 
-        $em->persist($updatedUser);
+
+        if($currentUser instanceof Users)
+        {
+            $password = $newUser->getPassword();
+            $hash = $this->_passwordHasher->hashPassword($newUser,$password);
+
+            $currentUser->setEmail($newUser->getEmail())
+                        ->setName($newUser->getName())
+                        ->setPassword($hash)
+                        ->setRoles($newUser->getRoles());
+        }
+
+        $em->persist($currentUser);
         $em->flush();
-        $this->_cache->clearCacheItem('user',"$id");
+
+        $this->_cache->clearUserCache($token);
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
-    #[Route('/api/users/{id<\d+>}', name: 'delete_user', methods:['DELETE'])]
-    public function deleteUser(Request $request, string $id, UsersRepository $usersRepository, EntityManagerInterface $em): JsonResponse
+    #[Route('/api/users', name: 'delete_user', methods:['DELETE'])]
+    public function deleteUser(Request $request, UsersRepository $usersRepository, EntityManagerInterface $em): JsonResponse
     {
-        $user = $usersRepository->find($id);
-        $usersRepository->remove($user);
-        $em->flush();
-        $this->_cache->clearCacheItem('user',"$id");
+        $token = $request->server->get('HTTP_AUTHORIZATION');
+        $user = $this->getUser();
+
+        if($user instanceof Users)
+        {
+            $usersRepository->remove($user);
+            $em->flush();
+            $this->_cache->clearUserCache($token);
+        }
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 }
