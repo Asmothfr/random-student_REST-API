@@ -16,6 +16,9 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
 
 class UsersController extends AbstractController
 {
@@ -32,7 +35,21 @@ class UsersController extends AbstractController
         $this->_validator = $validatorService;
     }
 
-
+    /**
+     * @OA\Response(
+     *      response=200,
+     *      description="Return the current user information",
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Users::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="User")
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route('/api/users', name: 'get_user', methods: ['GET'])]
     public function getCurrentUser(Request $request): JsonResponse
     {
@@ -46,6 +63,22 @@ class UsersController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
     }
 
+    /**
+     * @OA\Response(
+     *      response=201,
+     *      description="Create a new user",
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Users::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="User")
+     * 
+     * @param Request $request
+     * @param EntityManagerInterface $em
+     * @return JsonResponse
+     */
     #[Route('/api/users', name:"create_user", methods:['POST'])]
     public function createUser(Request $request, EntityManagerInterface $em) : JsonResponse
     {
@@ -68,8 +101,24 @@ class UsersController extends AbstractController
         return new JsonResponse(null, Response::HTTP_CREATED, [], false);
     }
 
+    /**
+     * @OA\Response(
+     *      response=204,
+     *      description="Edit the current user",
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Users::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="User")
+     * 
+     * @param Request $request
+     * @param EntityManagerInterface $em
+     * @return JsonResponse
+     */
     #[Route('/api/users', name:'edit_user', methods:['PUT'])]
-    public function editUser(Request $request, UsersRepository $usersRepository, EntityManagerInterface $em): JsonResponse
+    public function editUser(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $jsonData = $request->getContent();
         $newUser = $this->_serializer->deserialize($jsonData, Users::class, 'json');
@@ -79,7 +128,7 @@ class UsersController extends AbstractController
         {
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
         }
-        
+
         $token = $request->server->get('HTTP_AUTHORIZATION');
         $currentUser = $this->getUser();
 
@@ -103,6 +152,23 @@ class UsersController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
+    /**
+     * @OA\Response(
+     *      response=204,
+     *      description="Delete the current user",
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Users::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="User")
+     * 
+     * @param Request $request
+     * @param UsersRepository $userRepository
+     * @param EntityManagerInterface $em
+     * @return JsonResponse
+     */
     #[Route('/api/users', name: 'delete_user', methods:['DELETE'])]
     public function deleteUser(Request $request, UsersRepository $usersRepository, EntityManagerInterface $em): JsonResponse
     {
