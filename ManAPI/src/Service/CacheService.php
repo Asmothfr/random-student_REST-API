@@ -32,7 +32,6 @@ class CacheService extends AbstractController
 
         if($cacheItemValue != null)
         {   
-            echo('cache');
             return $cacheItemValue;
         }
 
@@ -53,7 +52,7 @@ class CacheService extends AbstractController
      * @param ?SerializationContext $context
      * @return string
      */
-    public function getCache(string $cacheItemKey, ServiceEntityRepository $repository, string $repositoryMethod, ?int $resourceId = null, ?SerializationContext $context = null): ?string
+    public function getCache(string $cacheItemKey, ServiceEntityRepository $repository, string $repositoryMethod, mixed $resourceId = null, ?SerializationContext $context = null): ?string
     {
         $cacheItem = $this->_cache->getItem($cacheItemKey);
         $cacheItemValue = $cacheItem->get('value');

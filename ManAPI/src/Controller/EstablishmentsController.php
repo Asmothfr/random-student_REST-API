@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Users;
 use App\Service\CacheService;
 use App\Entity\Establishments;
+use App\Repository\EstablishmentsRepository;
 use App\Service\ValidatorService;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializerInterface;
@@ -34,7 +35,57 @@ class EstablishmentsController extends AbstractController
         $this->_accessor = PropertyAccess::createPropertyAccessor();
     }
 
+    /**
+     * @OA\Response(
+     *      response=200,
+     *      description="Returns all establishments of a user or only one if the id is given",
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Establishments::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="Establishments")
+     * 
+     * @param Request $request
+     * @param strign $id
+     * @param EstablishmentsRepository $establishmentsRepository
+     * @return JsonResponse
+     */
+    #[Route('api/establishments/{id<\d+>?null}', name: 'get_establisments', methods:['GET'])]
+    public function getEstablishments(Request $request, string $id, EstablishmentsRepository $establishmentsRepository): JsonResponse
+    {
+        $token = $request->server->get('HTTP_AUTHORIZATION');
+        $jsonUser = $this->_cache->getUserCache($token);
+        $user = $this->_serializer->deserialize($jsonUser, Users::class, 'json');
+        $userId = $this->_accessor->getValue($user, 'id');
 
+        if($id == null || $id == 'null')
+        {
+            $jsonEstablishments = $this->_cache->getCache('establishments'.$token, $establishmentsRepository, 'findBy', ['FK_user'=>$userId]);
+            return new JsonResponse($jsonEstablishments, Response::HTTP_OK,[], true);
+        }
+        
+        $jsonEstablishments = $this->_cache->getCache('establishments'.$id.$token, $establishmentsRepository, 'findBy', ['FK_user' => $userId, 'id'=>$id]);
+        return new JsonResponse($jsonEstablishments, Response::HTTP_OK,[], true);
+    }
+
+    /**
+     * @OA\Response(
+     *      description="Create a new establishment for the user",
+     *      response=201,
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Users::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="Establishments")
+     * 
+     * @param Request $request
+     * @param EntityManagerInterface $em
+     * @return JsonResponse
+     */
     #[Route('api/establishments', name: 'create_establishment', methods:['POST'])]
     public function createEstablishments(Request $request, EntityManagerInterface $em): JsonResponse
     {
@@ -56,5 +107,22 @@ class EstablishmentsController extends AbstractController
         $em->flush();
 
         return new JsonResponse(null, Response::HTTP_CREATED,[],false);
+    }
+
+    #[Route('api/establishments/{:id<\id+>}', name:'edit_establishments', methods:['PUT'])]
+    public function editEstablishments(Request $request, string $id, EntityManagerInterface $em): JsonResponse
+    {
+        $jsonData = $request->getContent();
+        $newEstablishment = $this->_serializer->deserialize($jsonData, Users::class, 'json');
+
+        $isValidate = $this->_validator->validator($newEstablishment);
+        if(!$isValidate)
+        {
+            return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
+        }
+
+        $token = $request->server->get('HTTP_AUTHORIZATION');
+        $userJson = $this->_cache->getUserCache($token);
+        $user = $this->_serializer->deserialize($userJson, Users::class, 'json');
     }
 }
