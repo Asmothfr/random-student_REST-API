@@ -7,6 +7,8 @@ use App\Service\CacheService;
 use App\Entity\Establishments;
 use App\Repository\EstablishmentsRepository;
 use App\Repository\UsersRepository;
+use App\Service\UserChecker;
+use App\Service\UserCheckerService;
 use App\Service\ValidatorService;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializerInterface;
@@ -28,14 +30,17 @@ class EstablishmentsController extends AbstractController
     private ValidatorService $_validator;
     private SerializerInterface $_serializer;
     private PropertyAccessor $_accessor;
+    private UserCheckerService $_userChecker;
 
-    public function __construct(CacheService $cacheService, ValidatorService $validatorService, SerializerInterface $serializerInterface)
+    public function __construct(CacheService $cacheService, ValidatorService $validatorService, SerializerInterface $serializerInterface, UserCheckerService $_userCheckerService)
     {
         $this->_cache = $cacheService;
         $this->_validator = $validatorService;
         $this->_serializer = $serializerInterface;
         $this->_accessor = PropertyAccess::createPropertyAccessor();
+        $this->_userChecker = $_userCheckerService;
     }
+
 
     /**
      * @OA\Response(
@@ -69,6 +74,12 @@ class EstablishmentsController extends AbstractController
         }
         
         $jsonEstablishments = $this->_cache->getCache('establishments'.$id.$token,$establishmentsRepository, 'findBy', ['FK_user' => $userId, 'id'=>$id]);
+
+        if(!$jsonEstablishments)
+        {
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
+        }
+
         return new JsonResponse($jsonEstablishments, Response::HTTP_OK,[], true);
     }
 
@@ -113,7 +124,7 @@ class EstablishmentsController extends AbstractController
 
      /**
      * @OA\Response(
-     *      description="Edit an establishment",
+     *      description="Edit an establishment by is id",
      *      response=202,
      *      @OA\JsonContent(
      *          type="array",
@@ -137,7 +148,7 @@ class EstablishmentsController extends AbstractController
         {
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
         }
-        
+
         $newEstablishment = $this->_serializer->deserialize($jsonData, Establishments::class, 'json');
         
         $toValidate = $this->_validator->validator($newEstablishment);
@@ -147,14 +158,11 @@ class EstablishmentsController extends AbstractController
         }
 
         $token = $request->server->get('HTTP_AUTHORIZATION');
-        $userJson = $this->_cache->getUserCache($token);
-        $user = $this->_serializer->deserialize($userJson, Users::class, 'json');
-        $userId = $user->getId();
 
         $currentEstablishment = $establishments->find($id);
-        $establishmentsUserFk = $currentEstablishment->getFKUser()->getId();
 
-        if($userId != $establishmentsUserFk)
+        $validUser = $this->_userChecker->userChecker($token,$currentEstablishment);
+        if(!$validUser)
         {
             return new JsonResponse(null, Response::HTTP_FORBIDDEN, [], false);
         }
@@ -168,9 +176,42 @@ class EstablishmentsController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
-    public function deleteEstablishment(Request $request, string $id, EntityManagerInterface $em): JsonResponse
+    /**
+     * @OA\Response(
+     *      description="Delete an establishment by is id",
+     *      response=204,
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Users::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="Establishments")
+     * 
+     * @param Request $request
+     * @param string $id
+     * @param EstablishmentsRepository $establishments
+     * @param EntityManagerInterface $em
+     * @return JsonResponse
+     */
+    #[Route('api/establishments/{id<\d+>}', name:'delete_establishment', methods:['DELETE'])]
+    public function deleteEstablishment(Request $request, string $id, EstablishmentsRepository $establishments, EntityManagerInterface $em): JsonResponse
     {
+        $token = $request->server->get('HTTP_AUTHORIZATION');
 
-        return new JsonResponse(null, Response::HTTP_ACCEPTED, [], false);
+        $currentEstablishment = $establishments->find($id);
+
+        $validUser = $this->_userChecker->userChecker($token,$currentEstablishment);
+        if(!$validUser)
+        {
+            return new JsonResponse(null, Response::HTTP_FORBIDDEN, [], false);
+        }
+
+        $establishments->remove($currentEstablishment);
+        $em->flush();
+
+        $this->_cache->clearCacheItem('establishments',$id.$token);
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 }
