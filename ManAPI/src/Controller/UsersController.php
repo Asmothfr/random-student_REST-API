@@ -121,12 +121,17 @@ class UsersController extends AbstractController
     public function editUser(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $jsonData = $request->getContent();
-        $newUser = $this->_serializer->deserialize($jsonData, Users::class, 'json');
-
-        $isValidate = $this->_validator->validator($newUser);
-        if(!$isValidate)
+        if(!$jsonData)
         {
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
+        }
+
+        $newUser = $this->_serializer->deserialize($jsonData, Users::class, 'json');
+
+        $toValidate = $this->_validator->validator($newUser);
+        if($toValidate !== true)
+        {
+            return new JsonResponse($toValidate, Response::HTTP_BAD_REQUEST, [], true);
         }
 
         $token = $request->server->get('HTTP_AUTHORIZATION');

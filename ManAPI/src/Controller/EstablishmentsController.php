@@ -6,6 +6,7 @@ use App\Entity\Users;
 use App\Service\CacheService;
 use App\Entity\Establishments;
 use App\Repository\EstablishmentsRepository;
+use App\Repository\UsersRepository;
 use App\Service\ValidatorService;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializerInterface;
@@ -19,6 +20,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use OpenApi\Annotations as OA;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
+use Symfony\Component\Validator\Constraints\Json;
 
 class EstablishmentsController extends AbstractController
 {
@@ -66,7 +68,7 @@ class EstablishmentsController extends AbstractController
             return new JsonResponse($jsonEstablishments, Response::HTTP_OK,[], true);
         }
         
-        $jsonEstablishments = $this->_cache->getCache('establishments'.$id.$token, $establishmentsRepository, 'findBy', ['FK_user' => $userId, 'id'=>$id]);
+        $jsonEstablishments = $this->_cache->getCache('establishments'.$id.$token,$establishmentsRepository, 'findBy', ['FK_user' => $userId, 'id'=>$id]);
         return new JsonResponse($jsonEstablishments, Response::HTTP_OK,[], true);
     }
 
@@ -87,7 +89,7 @@ class EstablishmentsController extends AbstractController
      * @return JsonResponse
      */
     #[Route('api/establishments', name: 'create_establishment', methods:['POST'])]
-    public function createEstablishments(Request $request, EntityManagerInterface $em): JsonResponse
+    public function createEstablishment(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $establishment = $this->_serializer->deserialize($request->getContent(), Establishments::class, 'json');
         
@@ -109,20 +111,66 @@ class EstablishmentsController extends AbstractController
         return new JsonResponse(null, Response::HTTP_CREATED,[],false);
     }
 
-    #[Route('api/establishments/{:id<\id+>}', name:'edit_establishments', methods:['PUT'])]
-    public function editEstablishments(Request $request, string $id, EntityManagerInterface $em): JsonResponse
+     /**
+     * @OA\Response(
+     *      description="Edit an establishment",
+     *      response=202,
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Users::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="Establishments")
+     * 
+     * @param Request $request
+     * @param string $id
+     * @param EstablishmentsRepository $establishments
+     * @param EntityManagerInterface $em
+     * @return JsonResponse
+     */
+    #[Route('api/establishments/{id<\d+>}', name:'edit_establishments', methods:['PUT'])]
+    public function editEstablishment(Request $request, string $id, EstablishmentsRepository $establishments, EntityManagerInterface $em): JsonResponse
     {
         $jsonData = $request->getContent();
-        $newEstablishment = $this->_serializer->deserialize($jsonData, Users::class, 'json');
-
-        $isValidate = $this->_validator->validator($newEstablishment);
-        if(!$isValidate)
+        if(!$jsonData)
         {
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
+        }
+        
+        $newEstablishment = $this->_serializer->deserialize($jsonData, Establishments::class, 'json');
+        
+        $toValidate = $this->_validator->validator($newEstablishment);
+        if($toValidate !== true)
+        {
+            return new JsonResponse($toValidate, Response::HTTP_BAD_REQUEST, [], true);
         }
 
         $token = $request->server->get('HTTP_AUTHORIZATION');
         $userJson = $this->_cache->getUserCache($token);
         $user = $this->_serializer->deserialize($userJson, Users::class, 'json');
+        $userId = $user->getId();
+
+        $currentEstablishment = $establishments->find($id);
+        $establishmentsUserFk = $currentEstablishment->getFKUser()->getId();
+
+        if($userId != $establishmentsUserFk)
+        {
+            return new JsonResponse(null, Response::HTTP_FORBIDDEN, [], false);
+        }
+
+        $currentEstablishment->setName($newEstablishment->getName());
+        $em->persist($currentEstablishment);
+        $em->flush();
+
+        $this->_cache->clearCacheItem('establishments',$id.$token);
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
+    }
+
+    public function deleteEstablishment(Request $request, string $id, EntityManagerInterface $em): JsonResponse
+    {
+
+        return new JsonResponse(null, Response::HTTP_ACCEPTED, [], false);
     }
 }

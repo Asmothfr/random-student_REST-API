@@ -18,13 +18,12 @@ class ValidatorService
         $this->_serializer = $serializerInterface;
     }
 
-    public function validator($entity): bool
+    public function validator($entity): mixed
     {
         $errors = $this->_validator->validate($entity);
         if($errors->count() > 0)
         {
-            $errors = $this->_serializer->serialize($errors, 'json');
-            return false;
+            return $errors = $this->_serializer->serialize($errors, 'json');
         }
         return true;
     }
