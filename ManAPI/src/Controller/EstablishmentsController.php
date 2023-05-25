@@ -24,6 +24,7 @@ use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyAccessor;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
+#[Route('api/establishments')]
 class EstablishmentsController extends AbstractController
 {
     private CacheService $_cache;
@@ -59,7 +60,7 @@ class EstablishmentsController extends AbstractController
      * @param EstablishmentsRepository $establishmentsRepository
      * @return JsonResponse
      */
-    #[Route('api/establishments/{id<\d+>?null}', name: 'get_establisments', methods:['GET'])]
+    #[Route('/{id<\d+>?null}', name: 'get_establisments', methods:['GET'])]
     public function getEstablishments(Request $request, string $id, EstablishmentsRepository $establishmentsRepository): JsonResponse
     {
         $token = $request->server->get('HTTP_AUTHORIZATION');
@@ -75,9 +76,7 @@ class EstablishmentsController extends AbstractController
         $jsonEstablishments = $this->_cache->getCache('establishments'.$id.$token,$establishmentsRepository, 'findBy', ['FK_user' => $userId, 'id'=>$id], $context);
 
         if(!$jsonEstablishments)
-        {
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
-        }
 
         return new JsonResponse($jsonEstablishments, Response::HTTP_OK,[], true);
     }
@@ -98,16 +97,14 @@ class EstablishmentsController extends AbstractController
      * @param EntityManagerInterface $em
      * @return JsonResponse
      */
-    #[Route('api/establishments', name: 'create_establishment', methods:['POST'])]
+    #[Route(name: 'create_establishment', methods:['POST'])]
     public function createEstablishment(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $establishment = $this->_serializer->deserialize($request->getContent(), Establishments::class, 'json');
         
         $isValidate = $this->_validator->validator($establishment);
         if(!$isValidate)
-        {
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
-        }
 
         $token = $request->server->get('HTTP_AUTHORIZATION');
         $userJson = $this->_cache->getUserCache($token);
@@ -139,38 +136,33 @@ class EstablishmentsController extends AbstractController
      * @param EntityManagerInterface $em
      * @return JsonResponse
      */
-    #[Route('api/establishments/{id<\d+>}', name:'edit_establishments', methods:['PUT'])]
+    #[Route('/{id<\d+>}', name:'edit_establishments', methods:['PUT'])]
     public function editEstablishment(Request $request, string $id, EstablishmentsRepository $establishments, EntityManagerInterface $em): JsonResponse
     {
         $jsonData = $request->getContent();
         if(!$jsonData)
-        {
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
-        }
 
+        dd('endpoint1');
         $newEstablishment = $this->_serializer->deserialize($jsonData, Establishments::class, 'json');
         
         $toValidate = $this->_validator->validator($newEstablishment);
         if($toValidate !== true)
-        {
             return new JsonResponse($toValidate, Response::HTTP_BAD_REQUEST, [], true);
-        }
 
         $token = $request->server->get('HTTP_AUTHORIZATION');
         $userId = $this->_userService->getUserId($token);
 
-        $currentEstablishment = $establishments->findBy(['FK_user'=>$userId, 'id'=>$id]);
-
-        if(!$currentEstablishment)
-        {
+        
+        $currentEstablishments = $establishments->findBy(['FK_user'=>$userId, 'id'=>$id]);
+        
+        if(!$currentEstablishments)
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
-        }
 
-        if($currentEstablishment instanceof Establishments)
-        {
+        foreach($currentEstablishments as $currentEstablishment)
             $currentEstablishment->setName($newEstablishment->getName());
-            $em->persist($currentEstablishment);
-        }
+
+        $this->_accessor->setValue($currentEstablishment, "name", $newEstablishment->getName());
         $em->flush();
 
         $this->_cache->clearCacheItem('establishments',$id.$token);
@@ -196,7 +188,7 @@ class EstablishmentsController extends AbstractController
      * @param EntityManagerInterface $em
      * @return JsonResponse
      */
-    #[Route('api/establishments/{id<\d+>}', name:'delete_establishment', methods:['DELETE'])]
+    #[Route('/{id<\d+>}', name:'delete_establishment', methods:['DELETE'])]
     public function deleteEstablishment(Request $request, string $id, EstablishmentsRepository $establishments, EntityManagerInterface $em): JsonResponse
     {
         $token = $request->server->get('HTTP_AUTHORIZATION');
@@ -205,14 +197,10 @@ class EstablishmentsController extends AbstractController
         $currentEstablishment = $establishments->findBy(['FK_user'=>$userId, 'id'=>$id]);
 
         if(!$currentEstablishment)
-        {
             return new JsonResponse(null, Response::HTTP_FORBIDDEN, [], false);
-        }
 
-        if($currentEstablishment instanceof Establishments)
-        {
+        foreach($currentEstablishment as $currentEstablishment)
             $establishments->remove($currentEstablishment);
-        }
             
         $em->flush();
 

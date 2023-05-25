@@ -19,7 +19,8 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use OpenApi\Annotations as OA;
-
+ 
+#[Route('/api/users')]
 class UsersController extends AbstractController
 {
     private UserPasswordHasherInterface $_passwordHasher;
@@ -50,7 +51,7 @@ class UsersController extends AbstractController
      * @param Request $request
      * @return JsonResponse
      */
-    #[Route('/api/users', name: 'get_user', methods: ['GET'])]
+    #[Route(name: 'get_user', methods: ['GET'])]
     public function getCurrentUser(Request $request): JsonResponse
     {
         $token = $request->server->get('HTTP_AUTHORIZATION');
@@ -60,7 +61,11 @@ class UsersController extends AbstractController
         {
             return new JsonResponse($jsonContent, Response::HTTP_OK, [], true,);
         }
-        return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
+        else
+        {
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
+        }
+        
     }
 
     /**
@@ -79,7 +84,7 @@ class UsersController extends AbstractController
      * @param EntityManagerInterface $em
      * @return JsonResponse
      */
-    #[Route('/api/users', name:"create_user", methods:['POST'])]
+    #[Route(name:"create_user", methods:['POST'])]
     public function createUser(Request $request, EntityManagerInterface $em) : JsonResponse
     {
         $userInfoJson = $request->getContent();
@@ -87,9 +92,7 @@ class UsersController extends AbstractController
         
         $isValidate = $this->_validator->validator($user);
         if(!$isValidate)
-        {
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
-        }
         
         $password = $user->getPassword();
         $hash = $this->_passwordHasher->hashPassword($user,$password);
@@ -117,22 +120,18 @@ class UsersController extends AbstractController
      * @param EntityManagerInterface $em
      * @return JsonResponse
      */
-    #[Route('/api/users', name:'edit_user', methods:['PUT'])]
+    #[Route( name:'edit_user', methods:['PUT'])]
     public function editUser(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $jsonData = $request->getContent();
         if(!$jsonData)
-        {
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
-        }
 
         $newUser = $this->_serializer->deserialize($jsonData, Users::class, 'json');
 
         $toValidate = $this->_validator->validator($newUser);
         if($toValidate !== true)
-        {
             return new JsonResponse($toValidate, Response::HTTP_BAD_REQUEST, [], true);
-        }
 
         $token = $request->server->get('HTTP_AUTHORIZATION');
         $currentUser = $this->getUser();
@@ -174,7 +173,7 @@ class UsersController extends AbstractController
      * @param EntityManagerInterface $em
      * @return JsonResponse
      */
-    #[Route('/api/users', name: 'delete_user', methods:['DELETE'])]
+    #[Route(name: 'delete_user', methods:['DELETE'])]
     public function deleteUser(Request $request, UsersRepository $usersRepository, EntityManagerInterface $em): JsonResponse
     {
         $token = $request->server->get('HTTP_AUTHORIZATION');
