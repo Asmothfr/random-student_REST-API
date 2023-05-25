@@ -18,11 +18,13 @@ class Establishments
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["establishments_info"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 63)]
     #[Assert\NotBlank(message:'Name is required.')]
     #[Assert\Regex('/[-a-zA-Z0-9]/')]
+    #[Groups(["establishments_info"])]
     private ?string $name = null;
 
     #[ORM\OneToMany(mappedBy: 'FK_establishment', targetEntity: Classrooms::class, orphanRemoval: true)]

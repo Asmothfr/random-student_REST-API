@@ -7,7 +7,7 @@ use App\Service\CacheService;
 use JMS\Serializer\SerializerInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
-class UserCheckerService
+class UserService
 {
     private CacheService $_cache;
     private SerializerInterface $_serializer;
@@ -38,4 +38,13 @@ class UserCheckerService
         }
         return false;
     }
+
+    public function getUserId(string $token): string
+    {
+        $jsonUser = $this->_cache->getUserCache($token);
+        $user = $this->_serializer->deserialize($jsonUser, Users::class, 'json');
+        $userId = $user->getId();
+        return $userId;
+    }
+
 }
