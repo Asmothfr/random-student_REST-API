@@ -18,6 +18,7 @@ class Classrooms
 
     #[ORM\ManyToOne(inversedBy: 'classrooms')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\Regex('/[\d]/')]
     private ?Establishments $FK_establishment = null;
 
     #[ORM\Column(length: 127)]
