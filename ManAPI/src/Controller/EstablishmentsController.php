@@ -214,7 +214,7 @@ class EstablishmentsController extends AbstractController
     }
 
     #[Route('/{estId<\d+>}/classrooms/{clsId<\d+>?null}',name:'get-classrooms-from-establishment', methods: ['GET'])]
-    public function getClassroomsByEstablishment(Request $request, string $estId, string $clsId, EstablishmentsRepository $establishmentsRepository, ClassroomsRepository $classroomsRepository)
+    public function getClassroomsByEstablishment(Request $request, string $estId, string $clsId, EstablishmentsRepository $establishmentsRepository, ClassroomsRepository $classroomsRepository): JsonResponse
     {
         $token = $request->server->get('HTTP_AUTHORIZATION');
         $userId = $this->_userService->getUserId($token);

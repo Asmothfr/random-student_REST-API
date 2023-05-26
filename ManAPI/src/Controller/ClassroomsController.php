@@ -30,7 +30,7 @@ class ClassroomsController extends AbstractController
     }
 
     #[Route('/{id<\d+>}', name:'add_classroom', methods:['POST'])]
-    public function addClassroom(Request $request, string $id, EstablishmentsRepository $establishmentsRepository, EntityManagerInterface $em)
+    public function addClassroom(Request $request, string $id, EstablishmentsRepository $establishmentsRepository, EntityManagerInterface $em): JsonResponse
     {        
         $token = $request->server->get('HTTP_AUTHORIZATION');
         $userJson = $this->_cache->getUserCache($token);
