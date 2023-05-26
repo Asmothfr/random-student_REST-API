@@ -2,11 +2,12 @@
 
 namespace App\Entity;
 
-use Symfony\Component\Validator\Constraints as Assert;
-use App\Repository\ClassroomsRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation\Groups;
+use App\Repository\ClassroomsRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ClassroomsRepository::class)]
 class Classrooms
@@ -14,6 +15,7 @@ class Classrooms
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["classrooms_info"])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'classrooms')]
@@ -24,6 +26,7 @@ class Classrooms
     #[ORM\Column(length: 127)]
     #[Assert\NotBlank(message:'Name is required.')]
     #[Assert\Regex('/[-a-zA-Z0-9]/')]
+    #[Groups(["classrooms_info"])]
     private ?string $name = null;
 
     #[ORM\OneToMany(mappedBy: 'FK_classroom', targetEntity: Students::class, orphanRemoval: true)]

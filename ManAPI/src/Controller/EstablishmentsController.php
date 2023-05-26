@@ -7,6 +7,7 @@ use App\Entity\Users;
 use App\Service\UserService;
 use App\Service\CacheService;
 use App\Entity\Establishments;
+use App\Repository\ClassroomsRepository;
 use OpenApi\Annotations as OA;
 use App\Service\ValidatorService;
 use App\Repository\UsersRepository;
@@ -76,7 +77,7 @@ class EstablishmentsController extends AbstractController
             return new JsonResponse($jsonEstablishments, Response::HTTP_OK,[], true);
         }
         
-        $jsonEstablishments = $this->_cache->getCache('establishments'.$id.$token,$establishmentsRepository, 'findBy', ['FK_user' => $userId, 'id'=>$id], $context);
+        $jsonEstablishments = $this->_cache->getCache('establishments'.$token.$id,$establishmentsRepository, 'findBy', ['FK_user' => $userId, 'id'=>$id], $context);
 
         if(!$jsonEstablishments)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
@@ -212,4 +213,29 @@ class EstablishmentsController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
+    #[Route('/{estId<\d+>}/classrooms/{clsId<\d+>?null}',name:'get-classrooms-from-establishment', methods: ['GET'])]
+    public function getClassroomsByEstablishment(Request $request, string $estId, string $clsId, EstablishmentsRepository $establishmentsRepository, ClassroomsRepository $classroomsRepository)
+    {
+        $token = $request->server->get('HTTP_AUTHORIZATION');
+        $userId = $this->_userService->getUserId($token);
+
+        $establishmentJson = $this->_cache->getCache('establishments'.$token.$userId, $establishmentsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$estId]);
+        $establishment = $this->_serializer->deserialize($establishmentJson, Establishments::class, 'json');
+
+        if(!$establishment)
+            return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
+
+        if($clsId == null || $clsId == 'null')
+        {
+            $context = SerializationContext::create()->setGroups('classrooms_info');
+            $classrooms = $this->_cache->getCache('classrooms'.$token, $classroomsRepository, 'findBy', ['FK_user'=>$userId, 'FK_establishment'=>$establishment], $context);
+            return new JsonResponse($classrooms, Response::HTTP_OK, [], true);
+        }
+        else
+        {
+            $context = SerializationContext::create()->setGroups('classrooms_info');
+            $classrooms = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findBy', ['FK_user'=>$userId, 'FK_establishment'=>$establishment, 'id'=>$clsId], $context);
+            return new JsonResponse($classrooms, Response::HTTP_OK, [], true);
+        }
+    }
 }
