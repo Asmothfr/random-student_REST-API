@@ -18,7 +18,7 @@ class Establishments
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["establishments_info"])]
+    #[Groups(["establishments_info", "classrooms_info"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 63)]

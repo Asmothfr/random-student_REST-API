@@ -60,7 +60,7 @@ class EstablishmentsController extends AbstractController
      * @OA\Tag(name="Establishments")
      * 
      * @param Request $request
-     * @param strign $id
+     * @param string $id
      * @param EstablishmentsRepository $establishmentsRepository
      * @return JsonResponse
      */
@@ -77,7 +77,7 @@ class EstablishmentsController extends AbstractController
             return new JsonResponse($jsonEstablishments, Response::HTTP_OK,[], true);
         }
         
-        $jsonEstablishments = $this->_cache->getCache('establishments'.$token.$id,$establishmentsRepository, 'findBy', ['FK_user' => $userId, 'id'=>$id], $context);
+        $jsonEstablishments = $this->_cache->getCache('establishments'.$token.$id,$establishmentsRepository, 'findOneBy', ['FK_user' => $userId, 'id'=>$id], $context);
 
         if(!$jsonEstablishments)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
@@ -125,7 +125,7 @@ class EstablishmentsController extends AbstractController
      /**
      * @OA\Response(
      *      description="Edit an establishment by is id",
-     *      response=202,
+     *      response=204,
      *      @OA\JsonContent(
      *          type="array",
      *          @OA\Items(ref=@Model(type=Users::class))
@@ -147,7 +147,6 @@ class EstablishmentsController extends AbstractController
         if(!$jsonData)
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
 
-        dd('endpoint1');
         $newEstablishment = $this->_serializer->deserialize($jsonData, Establishments::class, 'json');
         
         $toValidate = $this->_validator->validator($newEstablishment);
@@ -158,15 +157,14 @@ class EstablishmentsController extends AbstractController
         $userId = $this->_userService->getUserId($token);
 
         
-        $currentEstablishments = $establishments->findBy(['FK_user'=>$userId, 'id'=>$id]);
+        $currentEstablishment = $establishments->findOneBy(['FK_user'=>$userId, 'id'=>$id]);
         
-        if(!$currentEstablishments)
+        if(!$currentEstablishment)
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
 
-        foreach($currentEstablishments as $currentEstablishment)
-            $currentEstablishment->setName($newEstablishment->getName());
+        $currentEstablishment->setName($newEstablishment->getName());
 
-        $this->_accessor->setValue($currentEstablishment, "name", $newEstablishment->getName());
+        $em->persist($currentEstablishment);
         $em->flush();
 
         $this->_cache->clearCacheItem('establishments',$id.$token);
@@ -198,13 +196,12 @@ class EstablishmentsController extends AbstractController
         $token = $request->server->get('HTTP_AUTHORIZATION');
         $userId = $this->_userService->getUserId($token);
 
-        $currentEstablishment = $establishments->findBy(['FK_user'=>$userId, 'id'=>$id]);
+        $currentEstablishment = $establishments->findOneBy(['FK_user'=>$userId, 'id'=>$id]);
 
         if(!$currentEstablishment)
             return new JsonResponse(null, Response::HTTP_FORBIDDEN, [], false);
 
-        foreach($currentEstablishment as $currentEstablishment)
-            $establishments->remove($currentEstablishment);
+        $establishments->remove($currentEstablishment);
             
         $em->flush();
 
@@ -213,6 +210,25 @@ class EstablishmentsController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
+    /**
+     * @OA\Response(
+     *      response=200,
+     *      description="Returns all classrooms of a establishment or only one if the id is given",
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Establishments::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="Establishments")
+     * 
+     * @param Request $request
+     * @param string $estId
+     * @param ?string $clsId
+     * @param EstablishmentsRepository $establishmentsRepository
+     * @param ClassroomsRepository $classroomsRepository
+     * @return JsonResponse
+     */
     #[Route('/{estId<\d+>}/classrooms/{clsId<\d+>?null}',name:'get-classrooms-from-establishment', methods: ['GET'])]
     public function getClassroomsByEstablishment(Request $request, string $estId, string $clsId, EstablishmentsRepository $establishmentsRepository, ClassroomsRepository $classroomsRepository): JsonResponse
     {
