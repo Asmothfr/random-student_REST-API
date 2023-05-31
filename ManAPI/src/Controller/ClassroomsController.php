@@ -184,7 +184,26 @@ class ClassroomsController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
-    #[Route('/id<\d+>', name: 'delete_classroom', methods:['DELETE'])]
+    /**
+     * @OA\Response(
+     *      response=200,
+     *      description="Returns all classrooms of a establishment or only one if the id is given",
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Establishments::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="Classrooms")
+     * 
+     * @param Request $request
+     * @param string $estId
+     * @param ?string $clsId
+     * @param EstablishmentsRepository $establishmentsRepository
+     * @param ClassroomsRepository $classroomsRepository
+     * @return JsonResponse
+     */
+    #[Route('/{id<\d+>}', name: 'delete_classroom', methods:['DELETE'])]
     public function DeleteClassroom(Request $request, string $id, ClassroomsRepository $classroomsRepository, EntityManagerInterface $em): JsonResponse
     {
         if($id === 'null' || $id === null)
