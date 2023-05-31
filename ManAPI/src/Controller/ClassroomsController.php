@@ -78,7 +78,7 @@ class ClassroomsController extends AbstractController
         if($jsonClassrooms)
             return new JsonResponse($jsonClassrooms, Response::HTTP_OK, [], true);
         
-        return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
+        return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
     }
 
     /**
@@ -108,7 +108,7 @@ class ClassroomsController extends AbstractController
 
         $establishment = $establishmentsRepository->findOneBy(['FK_user'=>$userId, 'id'=>$estId]);
         if(!$establishment)
-            return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
 
         $classroom = $this->_serializer->deserialize($request->getContent(), Classrooms::class, 'json');
 
@@ -215,7 +215,7 @@ class ClassroomsController extends AbstractController
         $classroom = $classroomsRepository->findOneBy(['FK_user' => $userId,'id' => $id]);
 
         if(!$classroom)
-            return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
 
         $classroomsRepository->remove($classroom);
         $em->flush();

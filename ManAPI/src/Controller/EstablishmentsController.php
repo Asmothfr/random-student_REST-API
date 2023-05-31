@@ -160,7 +160,7 @@ class EstablishmentsController extends AbstractController
         $currentEstablishment = $establishments->findOneBy(['FK_user'=>$userId, 'id'=>$id]);
         
         if(!$currentEstablishment)
-            return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
 
         $currentEstablishment->setName($newEstablishment->getName());
 
@@ -199,7 +199,7 @@ class EstablishmentsController extends AbstractController
         $currentEstablishment = $establishments->findOneBy(['FK_user'=>$userId, 'id'=>$id]);
 
         if(!$currentEstablishment)
-            return new JsonResponse(null, Response::HTTP_FORBIDDEN, [], false);
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
 
         $establishments->remove($currentEstablishment);
             
@@ -239,19 +239,22 @@ class EstablishmentsController extends AbstractController
         $establishment = $this->_serializer->deserialize($establishmentJson, Establishments::class, 'json');
 
         if(!$establishment)
-            return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
 
         if($clsId == null || $clsId == 'null')
         {
             $context = SerializationContext::create()->setGroups('classrooms_info');
             $classrooms = $this->_cache->getCache('classrooms'.$token, $classroomsRepository, 'findBy', ['FK_user'=>$userId, 'FK_establishment'=>$establishment], $context);
-            return new JsonResponse($classrooms, Response::HTTP_OK, [], true);
         }
         else
         {
             $context = SerializationContext::create()->setGroups('classrooms_info');
             $classrooms = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findBy', ['FK_user'=>$userId, 'FK_establishment'=>$establishment, 'id'=>$clsId], $context);
-            return new JsonResponse($classrooms, Response::HTTP_OK, [], true);
         }
+
+        if($establishment)
+            return new JsonResponse($classrooms, Response::HTTP_OK, [], true);
+
+        return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
     }
 }
