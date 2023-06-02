@@ -11,6 +11,7 @@ use App\Service\ValidatorService;
 use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\EstablishmentsRepository;
+use App\Repository\StudentsRepository;
 use App\Service\UserService;
 use JMS\Serializer\SerializationContext;
 use Symfony\Component\HttpFoundation\Request;
@@ -67,12 +68,10 @@ class ClassroomsController extends AbstractController
 
         if($id === "null" || $id === null)
         {
-            echo('findBy');
              $jsonClassrooms = $this->_cache->getCache('classrooms'.$token, $classroomsRepository, 'findBy', ['FK_user'=>$userId], $context);
         }
         else
         {
-            echo('findOneBy');
             $jsonClassrooms = $this->_cache->getCache('classrooms'.$token.$id, $classroomsRepository, 'FindOneBy', ['FK_user'=>$userId, 'id'=>$id], $context);
         }
         if($jsonClassrooms)
@@ -223,5 +222,21 @@ class ClassroomsController extends AbstractController
         $this->_cache->clearCacheItem('classrooms',$token.$id);
         
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
+    }
+
+    #[Route('/{clsId<\d+>}/students/{stdId<\d+>?null}', name:'get_students_from_classroom', methods:['GET'])]
+    public function getStudentsfromClassroom(Request $request, string $clsId, string $stdId, ClassroomsRepository $classroomsRepository): JsonResponse
+    {
+        if($clsId === 'null' || $clsId === null)
+            return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
+
+        // Chercher la classe dans le cache.
+        $token = $request->server->get('HTTP_AUTORIZATION');
+        $userId = $this->_userService->getUserId($token);
+
+
+        // Chercher 
+        dd('route ok');
+        return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
     }
 }

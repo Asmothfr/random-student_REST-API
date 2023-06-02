@@ -15,7 +15,7 @@ class Classrooms
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["classrooms_info"])]
+    #[Groups(["classrooms_info", 'classrooms_from_establishment'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'classrooms')]
@@ -27,7 +27,7 @@ class Classrooms
     #[ORM\Column(length: 127)]
     #[Assert\NotBlank(message:'Name is required.')]
     #[Assert\Regex('/[-a-zA-Z0-9]/')]
-    #[Groups(["classrooms_info"])]
+    #[Groups(["classrooms_info", 'classrooms_from_establishment'])]
     private ?string $name = null;
 
     #[ORM\OneToMany(mappedBy: 'FK_classroom', targetEntity: Students::class, orphanRemoval: true)]

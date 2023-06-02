@@ -6,6 +6,7 @@ use Psr\Cache\CacheItemPoolInterface;
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Mapping\Entity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class CacheService extends AbstractController
@@ -72,6 +73,26 @@ class CacheService extends AbstractController
         }
         
         return null;
+    }
+
+    public function getSubCollections(string $cacheItemKey, object $object, string $methods, ?SerializationContext $context = null): ?string
+    {
+        $cacheItem = $this->_cache->getItem($cacheItemKey);
+        $cacheItemValue = $cacheItem->get('value');
+
+        if($cacheItemValue != null)
+        {
+            return $cacheItemValue;
+        }
+
+        $entitys = $object->$methods();
+        if($entitys != null)
+        {
+            $jsonContent = $this->_serializer->serialize($object, 'json', $context);
+            $cacheItem->set($jsonContent);
+            $this->_cache->save($cacheItem);
+            return $jsonContent;
+        }
     }
 
     public function clearAllCache():void

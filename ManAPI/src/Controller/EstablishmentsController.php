@@ -234,27 +234,27 @@ class EstablishmentsController extends AbstractController
     {
         $token = $request->server->get('HTTP_AUTHORIZATION');
         $userId = $this->_userService->getUserId($token);
-
-        $establishmentJson = $this->_cache->getCache('establishments'.$token.$userId, $establishmentsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$estId]);
-        $establishment = $this->_serializer->deserialize($establishmentJson, Establishments::class, 'json');
-
-        if(!$establishment)
+        $establishmentJson = $this->_cache->getCache('establishment'.$userId.$estId, $establishmentsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$estId]);
+        if(!$establishmentJson)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
-
-        if($clsId == null || $clsId == 'null')
+        
+        $establishment = $this->_serializer->deserialize($establishmentJson, Establishments::class, 'json');
+        if($clsId === 'null' || $clsId === null)
         {
-            $context = SerializationContext::create()->setGroups('classrooms_info');
-            $classrooms = $this->_cache->getCache('classrooms'.$token, $classroomsRepository, 'findBy', ['FK_user'=>$userId, 'FK_establishment'=>$establishment], $context);
+            $context = SerializationContext::create()->setGroups('classrooms_from_establishment');
+            $classrooms = $this->_cache->getSubCollections("classrooms_from_establishment".$token.$estId, $establishment, 'getClassrooms', $context);
+            // dd($classrooms);
         }
         else
         {
             $context = SerializationContext::create()->setGroups('classrooms_info');
-            $classrooms = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findBy', ['FK_user'=>$userId, 'FK_establishment'=>$establishment, 'id'=>$clsId], $context);
+            $classrooms = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findOneBy', ['FK_establishment' => $estId, 'id'=>$clsId], $context);
+            // dd($classrooms);
         }
-
-        if($establishment)
-            return new JsonResponse($classrooms, Response::HTTP_OK, [], true);
-
-        return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
+        
+        if(!$classrooms)
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
+        
+        return new JsonResponse($classrooms, Response::HTTP_OK, [], true);
     }
 }

@@ -18,16 +18,17 @@ class Establishments
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["establishments_info", "classrooms_info"])]
+    #[Groups(["establishments_info", "classrooms_info", 'classrooms_from_establishment'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 63)]
     #[Assert\NotBlank(message:'Name is required.')]
     #[Assert\Regex('/[-a-zA-Z0-9]/')]
-    #[Groups(["establishments_info"])]
+    #[Groups(["establishments_info", "classrooms_info", 'classrooms_from_establishment'])]
     private ?string $name = null;
 
     #[ORM\OneToMany(mappedBy: 'FK_establishment', targetEntity: Classrooms::class, orphanRemoval: true)]
+    #[Groups(['classrooms_from_establishment'])]
     private Collection $classrooms;
 
     #[ORM\ManyToOne(inversedBy: 'establishments')]
