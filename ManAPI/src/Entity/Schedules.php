@@ -6,6 +6,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 use App\Repository\SchedulesRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: SchedulesRepository::class)]
 class Schedules
@@ -13,18 +14,22 @@ class Schedules
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['schedules_info', 'schedules_from_classroom'])]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'schedules')]
+    #[ORM\ManyToOne(inversedBy: 'schedules',)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['schedules_info'])]
     private ?Classrooms $FK_classroom = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Assert\DateTime()]
+    #[Groups(['schedules_info', 'schedules_from_classroom'])]
     private ?\DateTimeInterface $start_time = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Assert\DateTime()]
+    #[Groups(['schedules_info', 'schedules_from_classroom'])]
     private ?\DateTimeInterface $end_time = null;
 
     #[ORM\ManyToOne(inversedBy: 'schedules')]

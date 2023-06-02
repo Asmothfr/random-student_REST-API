@@ -15,7 +15,7 @@ class Classrooms
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["classrooms_info", 'classrooms_from_establishment'])]
+    #[Groups(["classrooms_info", 'classrooms_from_establishment','students_from_classroom', 'schedules_info', 'schedules_from_classroom'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'classrooms')]
@@ -27,13 +27,15 @@ class Classrooms
     #[ORM\Column(length: 127)]
     #[Assert\NotBlank(message:'Name is required.')]
     #[Assert\Regex('/[-a-zA-Z0-9]/')]
-    #[Groups(["classrooms_info", 'classrooms_from_establishment'])]
+    #[Groups(["classrooms_info", 'classrooms_from_establishment','students_from_classroom', 'schedules_info','schedules_from_classroom'])]
     private ?string $name = null;
 
     #[ORM\OneToMany(mappedBy: 'FK_classroom', targetEntity: Students::class, orphanRemoval: true)]
+    #[Groups(['students_from_classroom'])]
     private Collection $students;
 
     #[ORM\OneToMany(mappedBy: 'FK_classroom', targetEntity: Schedules::class, orphanRemoval: true)]
+    #[Groups(['schedules_from_classroom'])]
     private Collection $schedules;
 
     #[ORM\ManyToOne(inversedBy: 'classrooms')]

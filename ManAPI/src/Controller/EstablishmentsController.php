@@ -18,7 +18,6 @@ use Nelmio\ApiDocBundle\Annotation\Model;
 use App\Repository\EstablishmentsRepository;
 use Doctrine\ORM\EntityManager;
 use Nelmio\ApiDocBundle\Annotation\Security;
-use PhpParser\Node\Stmt\Return_;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -234,7 +233,7 @@ class EstablishmentsController extends AbstractController
     {
         $token = $request->server->get('HTTP_AUTHORIZATION');
         $userId = $this->_userService->getUserId($token);
-        $establishmentJson = $this->_cache->getCache('establishment'.$userId.$estId, $establishmentsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$estId]);
+        $establishmentJson = $this->_cache->getCache('establishment'.$token.$estId, $establishmentsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$estId]);
         if(!$establishmentJson)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
         
@@ -248,7 +247,7 @@ class EstablishmentsController extends AbstractController
         else
         {
             $context = SerializationContext::create()->setGroups('classrooms_info');
-            $classrooms = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findOneBy', ['FK_establishment' => $estId, 'id'=>$clsId], $context);
+            $classrooms = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findOneBy', ['FK_User' => $userId, 'FK_establishment' => $estId, 'id'=>$clsId], $context);
             // dd($classrooms);
         }
         

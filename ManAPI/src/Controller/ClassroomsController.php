@@ -11,6 +11,7 @@ use App\Service\ValidatorService;
 use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\EstablishmentsRepository;
+use App\Repository\SchedulesRepository;
 use App\Repository\StudentsRepository;
 use App\Service\UserService;
 use JMS\Serializer\SerializationContext;
@@ -22,7 +23,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use OpenApi\Annotations as OA;
-use PhpParser\Node\Stmt\Return_;
 use Symfony\Component\Validator\Constraints\Json;
 
 #[Route('api/classrooms')]
@@ -224,19 +224,88 @@ class ClassroomsController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
+    /**
+     * @OA\Response(
+     *      response=200,
+     *      description="Returns all classrooms of a establishment or only one if the id is given",
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Establishments::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="Classrooms")
+     * 
+     * @param Request $request
+     * @param string $clsId
+     * @param ?string $stdId
+     * @param ClassroomsRepository $classroomsRepository
+     * @param StudentsRepository $StudentsRepository
+     * @return JsonResponse
+     */
     #[Route('/{clsId<\d+>}/students/{stdId<\d+>?null}', name:'get_students_from_classroom', methods:['GET'])]
-    public function getStudentsfromClassroom(Request $request, string $clsId, string $stdId, ClassroomsRepository $classroomsRepository): JsonResponse
+    public function getStudentsfromClassroom(Request $request, string $clsId, string $stdId, ClassroomsRepository $classroomsRepository, StudentsRepository $studentsRepository): JsonResponse
     {
-        if($clsId === 'null' || $clsId === null)
-            return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
-
-        // Chercher la classe dans le cache.
-        $token = $request->server->get('HTTP_AUTORIZATION');
+        $token = $request->server->get('HTTP_AUTHORIZATION');
         $userId = $this->_userService->getUserId($token);
+        $classroomJson = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$clsId]);
+        $classroom = $this->_serializer->deserialize($classroomJson, Classrooms::class, 'json');
 
+        if($stdId == 'null' || $stdId == null)
+        {   
+            $context = SerializationContext::create()->setGroups('students_from_classroom');
+            $students = $this->_cache->getSubCollections('students_from_classroom'.$token.$clsId, $classroom, 'getStudents', $context);
+        }
+        else
+        {
+            $context = SerializationContext::create()->setGroups('students_info');
+            $students = $this->_cache->getCache('students'.$token.$stdId, $studentsRepository, 'findOneBy', ['FK_user'=>$userId, 'FK_classrooms'=>$clsId, 'id'=>$stdId], $context);
+        }
 
-        // Chercher 
-        dd('route ok');
-        return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
+        if(!$students)
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
+
+        return new JsonResponse($students, Response::HTTP_OK, [], true);
+    }
+
+    /**
+     * @OA\Response(
+     *      response=200,
+     *      description="Returns all classrooms of a establishment or only one if the id is given",
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Establishments::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="Classrooms")
+     * 
+     * @param Request $request
+     * @param string $clsId
+     * @param ?string $schId
+     * @param ClassroomsRepository $classroomsRepository
+     * @param SchedulesRepository $SchedulesRepository
+     * @return JsonResponse
+     */
+    #[Route('/{clsId<\d+>}/schedules/{schId<\d+>?null}', name:'get_schedules_from_classroom', methods:['GET'])]
+    public function getSchedulesfromClassroom(Request $request, string $clsId, string $schId, ClassroomsRepository $classroomsRepository, SchedulesRepository $schedulesRepository): JsonResponse
+    {
+        $token = $request->server->get('HTTP_AUTHORIZATION');
+        $userId = $this->_userService->getUserId($token);
+        $classroomJson = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$clsId]);
+        $classroom = $this->_serializer->deserialize($classroomJson, Classrooms::class, 'json');
+
+        if($schId == 'null' || $schId == null)
+        {   
+            $context = SerializationContext::create()->setGroups('schedules_from_classroom');
+            $schedules = $this->_cache->getSubCollections('schedules_from_classroom'.$token.$clsId, $classroom, 'getSchedules', $context);
+        }
+        else
+        {
+            $context = SerializationContext::create()->setGroups('schedules_info');
+            $schedules = $this->_cache->getCache('students'.$token.$schId, $schedulesRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$schId], $context);
+        }
+
+        return new JsonResponse($schedules, Response::HTTP_OK, [], true);
     }
 }

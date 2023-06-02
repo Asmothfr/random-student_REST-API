@@ -5,6 +5,7 @@ namespace App\Entity;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\Repository\StudentsRepository;
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: StudentsRepository::class)]
 class Students
@@ -12,6 +13,7 @@ class Students
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['students_info','students_from_classroom'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'students')]
@@ -20,14 +22,17 @@ class Students
 
     #[ORM\Column(length: 31, nullable: true)]
     #[Assert\Regex('/[-a-zA-Z]/')]
+    #[Groups(['students_info','students_from_classroom'])]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 31)]
     #[Assert\Regex('/[-a-zA-Z]/')]
     #[Assert\NotBlank(message:'First name is required')]
+    #[Groups(['students_info','students_from_classroom'])]
     private ?string $firstname = null;
 
     #[ORM\Column]
+    #[Groups(['students_info','students_from_classroom'])]
     private ?int $score = null;
 
     #[ORM\ManyToOne(inversedBy: 'students')]
