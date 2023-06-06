@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\EstablishmentsRepository;
 use App\Repository\SchedulesRepository;
 use App\Repository\StudentsRepository;
+use App\Service\MasterService;
 use App\Service\UserService;
 use JMS\Serializer\SerializationContext;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,22 +27,8 @@ use OpenApi\Annotations as OA;
 use Symfony\Component\Validator\Constraints\Json;
 
 #[Route('api/classrooms')]
-class ClassroomsController extends AbstractController
+class ClassroomsController extends MasterService
 {
-    private SerializerInterface $_serializer;
-    private CacheService $_cache;
-    private ValidatorService $_validator;
-    private UserService $_userService;
-
-    public function __construct(SerializerInterface $serializerInterface, CacheService $cacheService, ValidatorService $validatorService, UserService $userService )
-    {
-        $this->_serializer = $serializerInterface;
-        $this->_cache = $cacheService;
-        $this->_validator = $validatorService;
-        $this->_userService = $userService;
-    }
-
-
     /**
      * @OA\Response(
      *      response=200,
@@ -62,8 +49,8 @@ class ClassroomsController extends AbstractController
     #[Route('/{id<\d+>?null}', name: 'get_classrooms', methods: ['GET'])]
     public function getClassrooms(Request $request, string $id, ClassroomsRepository $classroomsRepository): JsonResponse
     {
-        $token = $request->server->get('HTTP_AUTHORIZATION');
-        $userId = $this->_userService->getUserId($token);
+        $token = $request->headers->get('authorization');
+        $userId = $this->_user->getUserId($token);
         $context = SerializationContext::create()->setGroups(['classrooms_info']);
 
         if($id === "null" || $id === null)
@@ -99,8 +86,14 @@ class ClassroomsController extends AbstractController
      */
     #[Route('/establishments/{estId<\d+>}', name:'add_classroom', methods:['POST'])]
     public function addClassroom(Request $request, string $estId, EstablishmentsRepository $establishmentsRepository, EntityManagerInterface $em): JsonResponse
-    {        
-        $token = $request->server->get('HTTP_AUTHORIZATION');
+    {   
+        $classroom = $this->_serializer->deserialize($request->getContent(), Classrooms::class, 'json');
+
+        $toValidate = $this->_validator->validator($classroom);
+        if($toValidate !== true)
+            return new JsonResponse($toValidate, Response::HTTP_BAD_REQUEST, [], true);
+
+        $token = $request->headers->get('authorization');
         $userJson = $this->_cache->getUserCache($token);
         $user = $this->_serializer->deserialize($userJson, Users::class, 'json');
         $userId = $user->getId();
@@ -108,12 +101,6 @@ class ClassroomsController extends AbstractController
         $establishment = $establishmentsRepository->findOneBy(['FK_user'=>$userId, 'id'=>$estId]);
         if(!$establishment)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
-
-        $classroom = $this->_serializer->deserialize($request->getContent(), Classrooms::class, 'json');
-
-        $toValidate = $this->_validator->validator($classroom);
-        if(!$toValidate)
-            return new JsonResponse($toValidate, Response::HTTP_BAD_REQUEST, [], true);
 
         $classroom->setFKUser($user)
                     ->setFKEstablishmentId($establishment);
@@ -156,11 +143,11 @@ class ClassroomsController extends AbstractController
         $newClassroom = $this->_serializer->deserialize($jsonData, Classrooms::class, 'json');
 
         $validate = $this->_validator->validator($newClassroom);
-        if(!$validate !== true)
+        if($validate !== true)
             return new JsonResponse($validate, Response::HTTP_BAD_REQUEST, [], true);
 
-        $token = $request->server->get('HTTP_AUTHORIZATION');
-        $userId = $this->_userService->getUserId($token);
+        $token = $request->headers->get('authorization');
+        $userId = $this->_user->getUserId($token);
 
         $establishmentJson = $this->_cache->getCache('establishments'.$token.$estId, $establishmentsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$estId]);
         $establishment = $this->_serializer->deserialize($establishmentJson, Establishments::class, 'json');
@@ -208,8 +195,8 @@ class ClassroomsController extends AbstractController
         if($id === 'null' || $id === null)
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
 
-        $token = $request->server->get('HTTP_AUTHORIZATION');
-        $userId = $this->_userService->getUserId($token);
+        $token = $request->headers->get('authorization');
+        $userId = $this->_user->getUserId($token);
 
         $classroom = $classroomsRepository->findOneBy(['FK_user' => $userId,'id' => $id]);
 
@@ -246,8 +233,8 @@ class ClassroomsController extends AbstractController
     #[Route('/{clsId<\d+>}/students/{stdId<\d+>?null}', name:'get_students_from_classroom', methods:['GET'])]
     public function getStudentsfromClassroom(Request $request, string $clsId, string $stdId, ClassroomsRepository $classroomsRepository, StudentsRepository $studentsRepository): JsonResponse
     {
-        $token = $request->server->get('HTTP_AUTHORIZATION');
-        $userId = $this->_userService->getUserId($token);
+        $token = $request->headers->get('authorization');
+        $userId = $this->_user->getUserId($token);
         $classroomJson = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$clsId]);
         $classroom = $this->_serializer->deserialize($classroomJson, Classrooms::class, 'json');
 
@@ -290,8 +277,8 @@ class ClassroomsController extends AbstractController
     #[Route('/{clsId<\d+>}/schedules/{schId<\d+>?null}', name:'get_schedules_from_classroom', methods:['GET'])]
     public function getSchedulesfromClassroom(Request $request, string $clsId, string $schId, ClassroomsRepository $classroomsRepository, SchedulesRepository $schedulesRepository): JsonResponse
     {
-        $token = $request->server->get('HTTP_AUTHORIZATION');
-        $userId = $this->_userService->getUserId($token);
+        $token = $request->headers->get('authorization');
+        $userId = $this->_user->getUserId($token);
         $classroomJson = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$clsId]);
         $classroom = $this->_serializer->deserialize($classroomJson, Classrooms::class, 'json');
 

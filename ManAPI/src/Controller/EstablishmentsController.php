@@ -16,6 +16,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use App\Repository\EstablishmentsRepository;
+use App\Service\MasterService;
 use Doctrine\ORM\EntityManager;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,24 +29,8 @@ use Symfony\Component\PropertyAccess\PropertyAccessor;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 #[Route('api/establishments')]
-class EstablishmentsController extends AbstractController
+class EstablishmentsController extends MasterService
 {
-    private CacheService $_cache;
-    private ValidatorService $_validator;
-    private SerializerInterface $_serializer;
-    private PropertyAccessor $_accessor;
-    private UserService $_userService;
-
-    public function __construct(CacheService $cacheService, ValidatorService $validatorService, SerializerInterface $serializerInterface, UserService $_userService)
-    {
-        $this->_cache = $cacheService;
-        $this->_validator = $validatorService;
-        $this->_serializer = $serializerInterface;
-        $this->_accessor = PropertyAccess::createPropertyAccessor();
-        $this->_userService = $_userService;
-    }
-
-
     /**
      * @OA\Response(
      *      response=200,
@@ -66,8 +51,8 @@ class EstablishmentsController extends AbstractController
     #[Route('/{id<\d+>?null}', name: 'get_establisments', methods:['GET'])]
     public function getEstablishments(Request $request, string $id, EstablishmentsRepository $establishmentsRepository): JsonResponse
     {
-        $token = $request->server->get('HTTP_AUTHORIZATION');
-        $userId = $this->_userService->getUserId($token);
+        $token = $request->headers->get('authorization');
+        $userId = $this->_user->getUserId($token);
 
         $context = SerializationContext::create()->setGroups('establishments_info');
         if($id == null || $id == 'null')
@@ -106,10 +91,10 @@ class EstablishmentsController extends AbstractController
         $establishment = $this->_serializer->deserialize($request->getContent(), Establishments::class, 'json');
         
         $isValidate = $this->_validator->validator($establishment);
-        if(!$isValidate)
+        if($isValidate !== true)
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
 
-        $token = $request->server->get('HTTP_AUTHORIZATION');
+        $token = $request->headers->get('authorization');
         $userJson = $this->_cache->getUserCache($token);
         $user = $this->_serializer->deserialize($userJson, Users::class, 'json');
 
@@ -152,8 +137,8 @@ class EstablishmentsController extends AbstractController
         if($toValidate !== true)
             return new JsonResponse($toValidate, Response::HTTP_BAD_REQUEST, [], true);
 
-        $token = $request->server->get('HTTP_AUTHORIZATION');
-        $userId = $this->_userService->getUserId($token);
+        $token = $request->headers->get('authorization');
+        $userId = $this->_user->getUserId($token);
 
         
         $currentEstablishment = $establishments->findOneBy(['FK_user'=>$userId, 'id'=>$id]);
@@ -192,8 +177,8 @@ class EstablishmentsController extends AbstractController
     #[Route('/{id<\d+>}', name:'delete_establishment', methods:['DELETE'])]
     public function deleteEstablishment(Request $request, string $id, EstablishmentsRepository $establishments, EntityManagerInterface $em): JsonResponse
     {
-        $token = $request->server->get('HTTP_AUTHORIZATION');
-        $userId = $this->_userService->getUserId($token);
+        $token = $request->headers->get('authorization');
+        $userId = $this->_user->getUserId($token);
 
         $currentEstablishment = $establishments->findOneBy(['FK_user'=>$userId, 'id'=>$id]);
 
@@ -231,8 +216,8 @@ class EstablishmentsController extends AbstractController
     #[Route('/{estId<\d+>}/classrooms/{clsId<\d+>?null}',name:'get-classrooms-from-establishment', methods: ['GET'])]
     public function getClassroomsByEstablishment(Request $request, string $estId, string $clsId, EstablishmentsRepository $establishmentsRepository, ClassroomsRepository $classroomsRepository): JsonResponse
     {
-        $token = $request->server->get('HTTP_AUTHORIZATION');
-        $userId = $this->_userService->getUserId($token);
+        $token = $request->headers->get('authorization');
+        $userId = $this->_user->getUserId($token);
         $establishmentJson = $this->_cache->getCache('establishment'.$token.$estId, $establishmentsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$estId]);
         if(!$establishmentJson)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);

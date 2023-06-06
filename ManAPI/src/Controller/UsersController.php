@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Users;
 use App\Service\CacheService;
 use App\Repository\UsersRepository;
+use App\Service\MasterService;
 use App\Service\ValidatorService;
 use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
@@ -21,19 +22,13 @@ use Nelmio\ApiDocBundle\Annotation\Security;
 use OpenApi\Annotations as OA;
  
 #[Route('/api/users')]
-class UsersController extends AbstractController
+class UsersController extends MasterService
 {
     private UserPasswordHasherInterface $_passwordHasher;
-    private SerializerInterface $_serializer;
-    private CacheService $_cache;
-    private ValidatorService $_validator;
 
-    public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface, CacheService $cacheService, ValidatorService $validatorService )
+    public function __construct(UserPasswordHasherInterface $usersPasswordHasher)
     {
         $this->_passwordHasher = $usersPasswordHasher;
-        $this->_serializer = $serializerInterface;
-        $this->_cache = $cacheService;
-        $this->_validator = $validatorService;
     }
 
     /**
@@ -54,7 +49,7 @@ class UsersController extends AbstractController
     #[Route(name: 'get_user', methods: ['GET'])]
     public function getCurrentUser(Request $request): JsonResponse
     {
-        $token = $request->server->get('HTTP_AUTHORIZATION');
+        $token = $request->headers->get('authorization');
         $jsonContent = $this->_cache->getUserCache($token);
         
         if($jsonContent)
@@ -91,7 +86,7 @@ class UsersController extends AbstractController
         $user = $this->_serializer->deserialize($userInfoJson, Users::class,'json');
         
         $isValidate = $this->_validator->validator($user);
-        if(!$isValidate)
+        if($isValidate !== true)
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
         
         $password = $user->getPassword();
@@ -133,7 +128,7 @@ class UsersController extends AbstractController
         if($toValidate !== true)
             return new JsonResponse($toValidate, Response::HTTP_BAD_REQUEST, [], true);
 
-        $token = $request->server->get('HTTP_AUTHORIZATION');
+        $token = $request->headers->get('authorization');
         $currentUser = $this->getUser();
 
 
@@ -176,7 +171,7 @@ class UsersController extends AbstractController
     #[Route(name: 'delete_user', methods:['DELETE'])]
     public function deleteUser(Request $request, UsersRepository $usersRepository, EntityManagerInterface $em): JsonResponse
     {
-        $token = $request->server->get('HTTP_AUTHORIZATION');
+        $token = $request->headers->get('authorization');
         $user = $this->getUser();
 
         if($user instanceof Users)

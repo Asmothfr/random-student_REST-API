@@ -3,8 +3,6 @@
 namespace App\Service;
 
 use JMS\Serializer\SerializerInterface;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ValidatorService
