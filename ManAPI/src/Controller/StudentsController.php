@@ -73,15 +73,28 @@ class StudentsController extends MasterService
         return new JsonResponse(null, Response::HTTP_CREATED, [], false);
     }
 
-    #[Route(name: 'update_student', methods: ['PUT'])]
+    #[Route('/{id<\d+>}',name: 'update_student', methods: ['PUT'])]
     public function updateStudent(): JsonResponse
     {
         dd('route ok');
     }
 
-    #[Route(name: 'delete_student', methods:['DELETE'])]
-    public function deleteStudent(): JsonResponse
+    #[Route('/{id<\d+>}', name: 'delete_student', methods:['DELETE'])]
+    public function deleteStudent(Request $request, string $id, StudentsRepository $studentsRepository, EntityManagerInterface $em): JsonResponse
     {
-        dd('route ok');
+        $token = $request->headers->get('authorization');
+        $userId = $this->_user->getUserId($token);
+
+        $student = $studentsRepository->findOneBy(['FK_user'=>$userId, 'id'=>$id]);
+
+        if(!$student)
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
+        
+        $em->remove($student);
+        $em->flush();
+
+        $this->_cache->clearCacheItem('students', $token.$id);
+
+        return new JsonResponse(null, Response::HTTP_OK, [], false);
     }
 }
