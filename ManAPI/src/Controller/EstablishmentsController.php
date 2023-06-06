@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Entity\Users;
 use App\Entity\Establishments;
 use App\Repository\ClassroomsRepository;
-use OpenApi\Annotations as OA;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use App\Repository\EstablishmentsRepository;
@@ -14,6 +13,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
 
 #[Route('api/establishments')]
 class EstablishmentsController extends MasterService

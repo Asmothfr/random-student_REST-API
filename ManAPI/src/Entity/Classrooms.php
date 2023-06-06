@@ -15,7 +15,7 @@ class Classrooms
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["classrooms_info", 'classrooms_from_establishment','students_from_classroom', 'schedules_info', 'schedules_from_classroom'])]
+    #[Groups(["classrooms_info", 'classrooms_from_establishment','students_from_classroom', 'schedules_info', 'schedules_from_classroom', 'classrooms_id'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'classrooms')]
