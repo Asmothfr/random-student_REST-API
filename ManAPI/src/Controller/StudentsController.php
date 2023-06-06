@@ -6,6 +6,7 @@ use App\Entity\Users;
 use App\Entity\Classrooms;
 use App\Service\MasterService;
 use App\Repository\ClassroomsRepository;
+use App\Repository\StudentsRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,9 +18,26 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 class StudentsController extends MasterService
 {
     #[Route('/{id<\d+>?null}', name:'get_students', methods:['GET'])]
-    public function getStudents(): JsonResponse
+    public function getStudents(Request $request, string $id, StudentsRepository $studentsRepository): JsonResponse
     {
-        dd('route ok');
+        $token = $request->headers->get('authorization');
+        $userId = $this->_user->getUserId($token);
+
+        $context = SerializationContext::create()->setGroups('students_info');
+        if($id === null || $id === "null")
+        {
+            $students = $this->_cache->getCache('students'.$token, $studentsRepository, 'findBy', ['FK_user'=>$userId], $context);
+        }
+        else
+        {
+            $students = $this->_cache->getCache('students'.$token.$id, $studentsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$id], $context);
+        }
+
+        if(!$students)
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
+        
+        return new JsonResponse($students, Response::HTTP_OK, [], true);
+
     }
 
     #[Route('/classrooms/{clsId<\d+>}', name: 'add_students', methods:['POST'])]
@@ -27,7 +45,6 @@ class StudentsController extends MasterService
     {
         $studentsJson = $request->getContent();
         $students = $this->_serializer->deserialize($studentsJson, 'array<App\Entity\Students>', 'json');
-        // dd($students);
 
         $validate = $this->_validator->validator($students);
         if($validate !== true)
@@ -36,10 +53,9 @@ class StudentsController extends MasterService
         $token = $request->headers->get('authorization');
         $userJson = $this->_cache->getUserCache($token);
         $user = $this->_serializer->deserialize($userJson, Users::class, 'json');
-        $userId = $user->getId();
 
         $context = SerializationContext::create()->setGroups('classrooms_id');
-        $classroomJson = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$clsId], $context);
+        $classroomJson = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findOneBy', ['FK_user'=>$user, 'id'=>$clsId], $context);
         $classroom = $this->_serializer->deserialize($classroomJson, Classrooms::class, 'json');
         if(!$classroom)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
