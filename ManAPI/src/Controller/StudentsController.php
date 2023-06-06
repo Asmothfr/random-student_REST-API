@@ -3,10 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\Students;
-use App\Service\UserService;
-use App\Service\CacheService;
-use App\Service\ValidatorService;
-use JMS\Serializer\SerializerInterface;
 use App\Repository\ClassroomsRepository;
 use App\Service\MasterService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -14,8 +10,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Validator\Constraints\Length;
 
 #[Route('api/students')]
 class StudentsController extends MasterService

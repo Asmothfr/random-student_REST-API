@@ -3,22 +3,14 @@
 namespace App\Controller;
 
 use App\Entity\Users;
-use App\Service\CacheService;
 use App\Repository\UsersRepository;
 use App\Service\MasterService;
-use App\Service\ValidatorService;
-use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use JMS\Serializer\SerializationContext;
-use PhpParser\Node\Expr\Instanceof_;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use Nelmio\ApiDocBundle\Annotation\Security;
 use OpenApi\Annotations as OA;
  
 #[Route('/api/users')]
