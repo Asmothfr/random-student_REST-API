@@ -3,26 +3,30 @@
 namespace App\Controller;
 
 use App\Entity\Users;
-use App\Repository\UsersRepository;
 use App\Service\MasterService;
+use OpenApi\Annotations as OA;
+use App\Repository\UsersRepository;
+use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use JMS\Serializer\SerializationContext;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use Nelmio\ApiDocBundle\Annotation\Security;
-use OpenApi\Annotations as OA;
  
 #[Route('/api/users')]
 class UsersController extends MasterService
 {
     private UserPasswordHasherInterface $_passwordHasher;
+    protected SerializerInterface $_serializer;
 
-    public function __construct(UserPasswordHasherInterface $usersPasswordHasher)
+    public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface)
     {
         $this->_passwordHasher = $usersPasswordHasher;
+        $this->_serializer = $serializerInterface;
     }
 
     /**
@@ -43,8 +47,9 @@ class UsersController extends MasterService
     #[Route(name: 'get_user', methods: ['GET'])]
     public function getCurrentUser(Request $request): JsonResponse
     {
-        $token = $request->headers->get('authorization');
-        $jsonContent = $this->_cache->getUserCache($token);
+        $user = $this->getUser();
+        $context = SerializationContext::create()->setGroups('user_info');
+        $jsonContent = $this->_serializer->serialize($user, 'json', $context);
         
         if($jsonContent)
         {
@@ -122,7 +127,6 @@ class UsersController extends MasterService
         if($toValidate !== true)
             return new JsonResponse($toValidate, Response::HTTP_BAD_REQUEST, [], true);
 
-        $token = $request->headers->get('authorization');
         $currentUser = $this->getUser();
 
 
@@ -139,8 +143,6 @@ class UsersController extends MasterService
 
         $em->persist($currentUser);
         $em->flush();
-
-        $this->_cache->clearUserCache($token);
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
@@ -165,14 +167,12 @@ class UsersController extends MasterService
     #[Route(name: 'delete_user', methods:['DELETE'])]
     public function deleteUser(Request $request, UsersRepository $usersRepository, EntityManagerInterface $em): JsonResponse
     {
-        $token = $request->headers->get('authorization');
         $user = $this->getUser();
 
         if($user instanceof Users)
         {
             $usersRepository->remove($user);
             $em->flush();
-            $this->_cache->clearUserCache($token);
         }
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }

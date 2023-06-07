@@ -2,8 +2,6 @@
 
 namespace App\Controller;
 
-use App\Entity\Users;
-use App\Entity\Classrooms;
 use App\Service\MasterService;
 use App\Repository\ClassroomsRepository;
 use App\Repository\StudentsRepository;
@@ -20,23 +18,23 @@ class StudentsController extends MasterService
     #[Route('/{id<\d+>?null}', name:'get_students', methods:['GET'])]
     public function getStudents(Request $request, string $id, StudentsRepository $studentsRepository): JsonResponse
     {
-        $token = $request->headers->get('authorization');
-        $userId = $this->_user->getUserId($token);
+        $user = $this->getUser();
 
-        $context = SerializationContext::create()->setGroups('students_info');
         if($id === null || $id === "null")
         {
-            $students = $this->_cache->getCache('students'.$token, $studentsRepository, 'findBy', ['FK_user'=>$userId], $context);
+            $students = $studentsRepository->findBy(['FK_user'=>$user]);
         }
         else
         {
-            $students = $this->_cache->getCache('students'.$token.$id, $studentsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$id], $context);
+            $students = $studentsRepository->findOneBy(['FK_user'=>$user, 'id'=>$id]);
         }
 
         if(!$students)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
         
-        return new JsonResponse($students, Response::HTTP_OK, [], true);
+        $context = SerializationContext::create()->setGroups('students_info');
+        $jsonContent = $this->_serializer->serialize($students, 'json', $context);
+        return new JsonResponse($jsonContent, Response::HTTP_OK, [], true);
 
     }
 
@@ -50,13 +48,9 @@ class StudentsController extends MasterService
         if($validate !== true)
             return new JsonResponse($validate, Response::HTTP_BAD_REQUEST, [], true);
 
-        $token = $request->headers->get('authorization');
-        $userJson = $this->_cache->getUserCache($token);
-        $user = $this->_serializer->deserialize($userJson, Users::class, 'json');
+        $user = $this->getUser();
 
-        $context = SerializationContext::create()->setGroups('classrooms_id');
-        $classroomJson = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findOneBy', ['FK_user'=>$user, 'id'=>$clsId], $context);
-        $classroom = $this->_serializer->deserialize($classroomJson, Classrooms::class, 'json');
+        $classroom = $classroomsRepository->findOneBy(['FK_user'=>$user, 'id'=>$clsId]);
         if(!$classroom)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
         
@@ -82,18 +76,15 @@ class StudentsController extends MasterService
     #[Route('/{id<\d+>}', name: 'delete_student', methods:['DELETE'])]
     public function deleteStudent(Request $request, string $id, StudentsRepository $studentsRepository, EntityManagerInterface $em): JsonResponse
     {
-        $token = $request->headers->get('authorization');
-        $userId = $this->_user->getUserId($token);
+        $user = $this->getUser();
 
-        $student = $studentsRepository->findOneBy(['FK_user'=>$userId, 'id'=>$id]);
+        $student = $studentsRepository->findOneBy(['FK_user'=>$user, 'id'=>$id]);
 
         if(!$student)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
         
         $em->remove($student);
         $em->flush();
-
-        $this->_cache->clearCacheItem('students', $token.$id);
 
         return new JsonResponse(null, Response::HTTP_OK, [], false);
     }

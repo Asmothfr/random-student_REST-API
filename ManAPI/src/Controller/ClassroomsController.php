@@ -43,22 +43,24 @@ class ClassroomsController extends MasterService
     #[Route('/{id<\d+>?null}', name: 'get_classrooms', methods: ['GET'])]
     public function getClassrooms(Request $request, string $id, ClassroomsRepository $classroomsRepository): JsonResponse
     {
-        $token = $request->headers->get('authorization');
-        $userId = $this->_user->getUserId($token);
-        $context = SerializationContext::create()->setGroups(['classrooms_info']);
+        $user = $this->getUser();
 
         if($id === "null" || $id === null)
         {
-             $jsonClassrooms = $this->_cache->getCache('classrooms'.$token, $classroomsRepository, 'findBy', ['FK_user'=>$userId], $context);
+             $classrooms = $classroomsRepository->findBy(['FK_user'=>$user]);
         }
         else
         {
-            $jsonClassrooms = $this->_cache->getCache('classrooms'.$token.$id, $classroomsRepository, 'FindOneBy', ['FK_user'=>$userId, 'id'=>$id], $context);
+            $classrooms = $classroomsRepository->FindOneBy(['FK_user'=>$user, 'id'=>$id]);
         }
-        if($jsonClassrooms)
-            return new JsonResponse($jsonClassrooms, Response::HTTP_OK, [], true);
         
-        return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
+        if(!$classrooms)
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
+        
+        $context = SerializationContext::create()->setGroups(['classrooms_info']);
+        $jsonContent = $this->_serializer->serialize($classrooms, 'json', $context);
+        return new JsonResponse($jsonContent, Response::HTTP_OK, [], true);
+        
     }
 
     /**
@@ -87,12 +89,9 @@ class ClassroomsController extends MasterService
         if($toValidate !== true)
             return new JsonResponse($toValidate, Response::HTTP_BAD_REQUEST, [], true);
 
-        $token = $request->headers->get('authorization');
-        $userJson = $this->_cache->getUserCache($token);
-        $user = $this->_serializer->deserialize($userJson, Users::class, 'json');
-        $userId = $user->getId();
+        $user = $this->getUser();
 
-        $establishment = $establishmentsRepository->findOneBy(['FK_user'=>$userId, 'id'=>$estId]);
+        $establishment = $establishmentsRepository->findOneBy(['FK_user'=>$user, 'id'=>$estId]);
         if(!$establishment)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
 
@@ -101,8 +100,6 @@ class ClassroomsController extends MasterService
 
         $em->persist($classroom);
         $em->flush();
-
-        $this->_cache->clearCacheItem('classrooms',$token);
 
         return new JsonResponse(null, Response::HTTP_CREATED, [], false);
     }
@@ -140,16 +137,14 @@ class ClassroomsController extends MasterService
         if($validate !== true)
             return new JsonResponse($validate, Response::HTTP_BAD_REQUEST, [], true);
 
-        $token = $request->headers->get('authorization');
-        $userId = $this->_user->getUserId($token);
+        $user = $this->getUser();
 
-        $establishmentJson = $this->_cache->getCache('establishments'.$token.$estId, $establishmentsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$estId]);
-        $establishment = $this->_serializer->deserialize($establishmentJson, Establishments::class, 'json');
+        $establishment = $establishmentsRepository->findOneBy(['FK_user'=>$user, 'id'=>$estId]);
 
         if(!$establishment)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
 
-        $currentClassrooms = $classroomsRepository->findOneBy(['FK_user'=>$userId, 'id'=>$clsId]);
+        $currentClassrooms = $classroomsRepository->findOneBy(['FK_user'=>$user, 'id'=>$clsId]);
 
         if(!$currentClassrooms)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
@@ -160,7 +155,6 @@ class ClassroomsController extends MasterService
         $em->persist($currentClassrooms);
         $em->flush();
         
-        $this->_cache->clearCacheItem('classrooms',$token);
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
@@ -189,18 +183,15 @@ class ClassroomsController extends MasterService
         if($id === 'null' || $id === null)
             return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
 
-        $token = $request->headers->get('authorization');
-        $userId = $this->_user->getUserId($token);
+        $user = $this->getUser();
 
-        $classroom = $classroomsRepository->findOneBy(['FK_user' => $userId,'id' => $id]);
+        $classroom = $classroomsRepository->findOneBy(['FK_user' => $user,'id' => $id]);
 
         if(!$classroom)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
 
         $classroomsRepository->remove($classroom);
         $em->flush();
-
-        $this->_cache->clearCacheItem('classrooms',$token.$id);
         
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
@@ -227,26 +218,26 @@ class ClassroomsController extends MasterService
     #[Route('/{clsId<\d+>}/students/{stdId<\d+>?null}', name:'get_students_from_classroom', methods:['GET'])]
     public function getStudentsfromClassroom(Request $request, string $clsId, string $stdId, ClassroomsRepository $classroomsRepository, StudentsRepository $studentsRepository): JsonResponse
     {
-        $token = $request->headers->get('authorization');
-        $userId = $this->_user->getUserId($token);
-        $classroomJson = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$clsId]);
-        $classroom = $this->_serializer->deserialize($classroomJson, Classrooms::class, 'json');
+        $user = $this->getUser();
+        $classroom = $classroomsRepository->findOneBy(['FK_user'=>$user, 'id'=>$clsId]);
 
         if($stdId == 'null' || $stdId == null)
         {   
             $context = SerializationContext::create()->setGroups('students_from_classroom');
-            $students = $this->_cache->getSubCollections('students_from_classroom'.$token.$clsId, $classroom, 'getStudents', $context);
+            $students = $classroom->getStudents();
+            $jsonContent = $this->_serializer->serialize($students, 'json', $context);
         }
         else
         {
             $context = SerializationContext::create()->setGroups('students_info');
-            $students = $this->_cache->getCache('students'.$token.$stdId, $studentsRepository, 'findOneBy', ['FK_user'=>$userId, 'FK_classrooms'=>$clsId, 'id'=>$stdId], $context);
+            $students = $studentsRepository->findOneBy(['FK_user'=>$user, 'FK_classrooms'=>$clsId, 'id'=>$stdId]);
+            $jsonContent = $this->_serializer->serialize($students, 'json', $context);
         }
 
         if(!$students)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
 
-        return new JsonResponse($students, Response::HTTP_OK, [], true);
+        return new JsonResponse($jsonContent, Response::HTTP_OK, [], true);
     }
 
     /**
@@ -271,22 +262,22 @@ class ClassroomsController extends MasterService
     #[Route('/{clsId<\d+>}/schedules/{schId<\d+>?null}', name:'get_schedules_from_classroom', methods:['GET'])]
     public function getSchedulesfromClassroom(Request $request, string $clsId, string $schId, ClassroomsRepository $classroomsRepository, SchedulesRepository $schedulesRepository): JsonResponse
     {
-        $token = $request->headers->get('authorization');
-        $userId = $this->_user->getUserId($token);
-        $classroomJson = $this->_cache->getCache('classrooms'.$token.$clsId, $classroomsRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$clsId]);
-        $classroom = $this->_serializer->deserialize($classroomJson, Classrooms::class, 'json');
+        $user = $this->getUser();
+        $classroom= $classroomsRepository->findOneBy(['FK_user'=>$user, 'id'=>$clsId]);
 
         if($schId == 'null' || $schId == null)
         {   
             $context = SerializationContext::create()->setGroups('schedules_from_classroom');
-            $schedules = $this->_cache->getSubCollections('schedules_from_classroom'.$token.$clsId, $classroom, 'getSchedules', $context);
+            $schedules = $classroom->getSchedules();
+            $jsonContent = $this->_serializer->serialize($schedules, 'json', $context);
         }
         else
         {
             $context = SerializationContext::create()->setGroups('schedules_info');
-            $schedules = $this->_cache->getCache('students'.$token.$schId, $schedulesRepository, 'findOneBy', ['FK_user'=>$userId, 'id'=>$schId], $context);
+            $schedules = $schedulesRepository->findOneBy(['FK_user'=>$user, 'id'=>$schId], $context);
+            $jsonContent = $this->_serializer->serialize($schedules, 'json', $context);
         }
 
-        return new JsonResponse($schedules, Response::HTTP_OK, [], true);
+        return new JsonResponse($jsonContent, Response::HTTP_OK, [], true);
     }
 }
