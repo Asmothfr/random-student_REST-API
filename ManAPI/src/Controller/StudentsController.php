@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Students;
 use App\Service\MasterService;
 use App\Repository\ClassroomsRepository;
 use App\Repository\StudentsRepository;
@@ -68,9 +69,26 @@ class StudentsController extends MasterService
     }
 
     #[Route('/{id<\d+>}',name: 'update_student', methods: ['PUT'])]
-    public function updateStudent(): JsonResponse
+    public function updateStudent(Request $request, string $id, StudentsRepository $studentsRepository, EntityManagerInterface $em): JsonResponse
     {
-        dd('route ok');
+        $jsonData = $request->getContent();
+        $newStudent = $this->_serializer->deserialize($jsonData, Students::class, 'json');
+
+        $validate = $this->_validator->validator($newStudent);
+        if($validate !== true)
+            return new JsonResponse($validate, Response::HTTP_BAD_REQUEST, [], true);
+
+        $user = $this->getUser();
+        $currentStudent = $studentsRepository->findOneBy(['FK_user'=>$user, 'id'=>$id]);
+        
+        $currentStudent->setFKClassroomId($newStudent->getFKClassroomId())
+                        ->setLastname($newStudent->getLastname())
+                        ->setFirstname($newStudent->getFirstname())
+                        ->setScore($newStudent->getScore());
+        $em->persist($currentStudent);
+        $em->flush();
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
     #[Route('/{id<\d+>}', name: 'delete_student', methods:['DELETE'])]
