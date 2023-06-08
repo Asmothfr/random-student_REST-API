@@ -72,8 +72,6 @@ class StudentsController extends MasterService
      * @OA\Tag(name="Students")
      * 
      * @param Request $request
-     * @param string $id
-     * @param ClassroomsRepository $classroomsRepository
      * @param EntityManagerInterface $em
      * @return JsonResponse
      */
@@ -107,8 +105,7 @@ class StudentsController extends MasterService
      * @OA\Tag(name="Students")
      * 
      * @param Request $request
-     * @param string $clsId
-     * @param string $estId
+     * @param string $id
      * @param StudentsRepository $StudentsRepository
      * @param EntityManagerInterface $em
      * @return JsonResponse
@@ -167,6 +164,6 @@ class StudentsController extends MasterService
         $em->remove($student);
         $em->flush();
 
-        return new JsonResponse(null, Response::HTTP_OK, [], false);
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 }
