@@ -128,7 +128,6 @@ class EstablishmentsController extends MasterService
         $user = $this->getUser();
         
         $currentEstablishment = $establishments->findOneBy(['FK_user'=>$user, 'id'=>$id]);
-        
         if(!$currentEstablishment)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
 

@@ -16,6 +16,23 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 #[Route('api/students')]
 class StudentsController extends MasterService
 {
+    /**
+     * @OA\Response(
+     *      response=200,
+     *      description="Returns all students of a user or only one if the id is given",
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Students::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="Students")
+     * 
+     * @param Request $request
+     * @param string $id
+     * @param StudentsRepository $StudentsRepository
+     * @return JsonResponse
+     */
     #[Route('/{id<\d+>?null}', name:'get_students', methods:['GET'])]
     public function getStudents(Request $request, string $id, StudentsRepository $studentsRepository): JsonResponse
     {
@@ -39,6 +56,24 @@ class StudentsController extends MasterService
 
     }
 
+    /**
+     * @OA\Response(
+     *      description="Create a new students for the classrooms whose ID has been gived",
+     *      response=201,
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Students::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="Students")
+     * 
+     * @param Request $request
+     * @param string $id
+     * @param ClassroomsRepository $classroomsRepository
+     * @param EntityManagerInterface $em
+     * @return JsonResponse
+     */
     #[Route('/classrooms/{clsId<\d+>}', name: 'add_students', methods:['POST'])]
     public function addStudents(Request $request, string $clsId, ClassroomsRepository $classroomsRepository, EntityManagerInterface $em): JsonResponse
     {
@@ -68,6 +103,25 @@ class StudentsController extends MasterService
         return new JsonResponse(null, Response::HTTP_CREATED, [], false);
     }
 
+    /**
+     * @OA\Response(
+     *      description="Edit an students by is id",
+     *      response=204,
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=Students::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="Students")
+     * 
+     * @param Request $request
+     * @param string $clsId
+     * @param string $estId
+     * @param StudentsRepository $StudentsRepository
+     * @param EntityManagerInterface $em
+     * @return JsonResponse
+     */
     #[Route('/{id<\d+>}',name: 'update_student', methods: ['PUT'])]
     public function updateStudent(Request $request, string $id, StudentsRepository $studentsRepository, EntityManagerInterface $em): JsonResponse
     {
@@ -91,6 +145,24 @@ class StudentsController extends MasterService
         return new JsonResponse(null, Response::HTTP_NO_CONTENT, [], false);
     }
 
+    /**
+     * @OA\Response(
+     *      description="Delete a students by is id",
+     *      response=204,
+     *      @OA\JsonContent(
+     *          type="array",
+     *          @OA\Items(ref=@Model(type=?Students::class))
+     *      )
+     * )
+     * 
+     * @OA\Tag(name="Students")
+     * 
+     * @param Request $request
+     * @param string $id
+     * @param StudentsRepository $studentsRepository
+     * @param EntityManagerInterface $em
+     * @return JsonResponse
+     */
     #[Route('/{id<\d+>}', name: 'delete_student', methods:['DELETE'])]
     public function deleteStudent(Request $request, string $id, StudentsRepository $studentsRepository, EntityManagerInterface $em): JsonResponse
     {

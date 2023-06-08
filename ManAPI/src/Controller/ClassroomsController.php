@@ -29,7 +29,7 @@ class ClassroomsController extends MasterService
      *      description="Returns all classrooms of a user or only one if the id is given",
      *      @OA\JsonContent(
      *          type="array",
-     *          @OA\Items(ref=@Model(type=Establishments::class))
+     *          @OA\Items(ref=@Model(type=Classrooms::class))
      *      )
      * )
      * 
@@ -69,7 +69,7 @@ class ClassroomsController extends MasterService
      *      response=201,
      *      @OA\JsonContent(
      *          type="array",
-     *          @OA\Items(ref=@Model(type=Users::class))
+     *          @OA\Items(ref=@Model(type=Classrooms::class))
      *      )
      * )
      * 
@@ -77,6 +77,7 @@ class ClassroomsController extends MasterService
      * 
      * @param Request $request
      * @param string $id
+     * @param EstablismentsRepository $establishmentsRepository
      * @param EntityManagerInterface $em
      * @return JsonResponse
      */
@@ -110,7 +111,7 @@ class ClassroomsController extends MasterService
      *      response=204,
      *      @OA\JsonContent(
      *          type="array",
-     *          @OA\Items(ref=@Model(type=Users::class))
+     *          @OA\Items(ref=@Model(type=Classrooms::class))
      *      )
      * )
      * 
@@ -124,8 +125,8 @@ class ClassroomsController extends MasterService
      * @param EntityManagerInterface $em
      * @return JsonResponse
      */
-    #[Route('/{clsId<\d+>}/establishments/{estId<\d+>}', name: 'edit_classroom', methods: ['PUT'])]
-    public function editClassrooms(Request $request, string $clsId, string $estId, EstablishmentsRepository $establishmentsRepository, ClassroomsRepository $classroomsRepository, EntityManagerInterface $em ): JsonResponse
+    #[Route('/{clsId<\d+>}', name: 'edit_classroom', methods: ['PUT'])]
+    public function editClassrooms(Request $request, string $clsId, ClassroomsRepository $classroomsRepository, EntityManagerInterface $em ): JsonResponse
     {
         $jsonData = $request->getContent();
         if(!$jsonData)
@@ -139,18 +140,12 @@ class ClassroomsController extends MasterService
 
         $user = $this->getUser();
 
-        $establishment = $establishmentsRepository->findOneBy(['FK_user'=>$user, 'id'=>$estId]);
-
-        if(!$establishment)
-            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
-
         $currentClassrooms = $classroomsRepository->findOneBy(['FK_user'=>$user, 'id'=>$clsId]);
-
         if(!$currentClassrooms)
             return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
 
         $currentClassrooms->setName($newClassroom->getName())
-                            ->setFKEstablishmentId($establishment);
+                            ->setFKEstablishmentId($newClassroom->getFKEstablishmentId());
         
         $em->persist($currentClassrooms);
         $em->flush();
@@ -160,21 +155,20 @@ class ClassroomsController extends MasterService
 
     /**
      * @OA\Response(
-     *      response=200,
-     *      description="Returns all classrooms of a establishment or only one if the id is given",
+     *      description="Delete a classrooms by is id",
+     *      response=204,
      *      @OA\JsonContent(
      *          type="array",
-     *          @OA\Items(ref=@Model(type=Establishments::class))
+     *          @OA\Items(ref=@Model(type=Classrooms::class))
      *      )
      * )
      * 
      * @OA\Tag(name="Classrooms")
      * 
      * @param Request $request
-     * @param string $estId
-     * @param ?string $clsId
-     * @param EstablishmentsRepository $establishmentsRepository
+     * @param string $id
      * @param ClassroomsRepository $classroomsRepository
+     * @param EntityManagerInterface $em
      * @return JsonResponse
      */
     #[Route('/{id<\d+>}', name: 'delete_classroom', methods:['DELETE'])]
@@ -202,7 +196,7 @@ class ClassroomsController extends MasterService
      *      description="Returns all classrooms of a establishment or only one if the id is given",
      *      @OA\JsonContent(
      *          type="array",
-     *          @OA\Items(ref=@Model(type=Establishments::class))
+     *          @OA\Items(ref=@Model(type=Classrooms::class))
      *      )
      * )
      * 
@@ -246,7 +240,7 @@ class ClassroomsController extends MasterService
      *      description="Returns all classrooms of a establishment or only one if the id is given",
      *      @OA\JsonContent(
      *          type="array",
-     *          @OA\Items(ref=@Model(type=Establishments::class))
+     *          @OA\Items(ref=@Model(type=Classrooms::class))
      *      )
      * )
      * 

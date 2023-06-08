@@ -20,7 +20,6 @@ class Classrooms
 
     #[ORM\ManyToOne(inversedBy: 'classrooms')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Assert\Regex('/[\d]/')]
     #[Groups(["classrooms_info"])]
     private ?Establishments $FK_establishment = null;
 
