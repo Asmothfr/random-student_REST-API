@@ -81,23 +81,14 @@ class ClassroomsController extends MasterService
      * @param EntityManagerInterface $em
      * @return JsonResponse
      */
-    #[Route('/establishments/{estId<\d+>}', name:'add_classroom', methods:['POST'])]
-    public function addClassroom(Request $request, string $estId, EstablishmentsRepository $establishmentsRepository, EntityManagerInterface $em): JsonResponse
+    #[Route(name:'add_classroom', methods:['POST'])]
+    public function addClassroom(Request $request, EntityManagerInterface $em): JsonResponse
     {   
         $classroom = $this->_serializer->deserialize($request->getContent(), Classrooms::class, 'json');
 
         $toValidate = $this->_validator->validator($classroom);
         if($toValidate !== true)
             return new JsonResponse($toValidate, Response::HTTP_BAD_REQUEST, [], true);
-
-        $user = $this->getUser();
-
-        $establishment = $establishmentsRepository->findOneBy(['FK_user'=>$user, 'id'=>$estId]);
-        if(!$establishment)
-            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
-
-        $classroom->setFKUser($user)
-                    ->setFKEstablishmentId($establishment);
 
         $em->persist($classroom);
         $em->flush();

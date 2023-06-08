@@ -77,8 +77,8 @@ class StudentsController extends MasterService
      * @param EntityManagerInterface $em
      * @return JsonResponse
      */
-    #[Route('/classrooms/{clsId<\d+>}', name: 'add_students', methods:['POST'])]
-    public function addStudents(Request $request, string $clsId, ClassroomsRepository $classroomsRepository, EntityManagerInterface $em): JsonResponse
+    #[Route(name: 'add_students', methods:['POST'])]
+    public function addStudents(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $studentsJson = $request->getContent();
         $students = $this->_serializer->deserialize($studentsJson, 'array<App\Entity\Students>', 'json');
@@ -86,21 +86,9 @@ class StudentsController extends MasterService
         $validate = $this->_validator->validator($students);
         if($validate !== true)
             return new JsonResponse($validate, Response::HTTP_BAD_REQUEST, [], true);
-
-        $user = $this->getUser();
-
-        $classroom = $classroomsRepository->findOneBy(['FK_user'=>$user, 'id'=>$clsId]);
-        if(!$classroom)
-            return new JsonResponse(null, Response::HTTP_NOT_FOUND, [], false);
         
         foreach($students as $student)
-        {
-            $student->setFKUser($user)
-            ->setFKClassroomId($classroom)
-            ->setScore(0);
-
             $em->persist($student);
-        }
 
         $em->flush();
         return new JsonResponse(null, Response::HTTP_CREATED, [], false);
