@@ -12,6 +12,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
 
 #[Route('api/students')]
 class StudentsController extends MasterService
@@ -151,7 +154,7 @@ class StudentsController extends MasterService
      *      response=204,
      *      @OA\JsonContent(
      *          type="array",
-     *          @OA\Items(ref=@Model(type=?Students::class))
+     *          @OA\Items(ref=@Model(type=Students::class))
      *      )
      * )
      * 

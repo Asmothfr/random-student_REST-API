@@ -193,7 +193,7 @@ class ClassroomsController extends MasterService
     /**
      * @OA\Response(
      *      response=200,
-     *      description="Returns all classrooms of a establishment or only one if the id is given",
+     *      description="Returns all students of a classroom or only one if the id is given",
      *      @OA\JsonContent(
      *          type="array",
      *          @OA\Items(ref=@Model(type=Classrooms::class))
@@ -237,7 +237,7 @@ class ClassroomsController extends MasterService
     /**
      * @OA\Response(
      *      response=200,
-     *      description="Returns all classrooms of a establishment or only one if the id is given",
+     *      description="Returns all schedules of a classroom or only one if the id is given",
      *      @OA\JsonContent(
      *          type="array",
      *          @OA\Items(ref=@Model(type=Classrooms::class))
