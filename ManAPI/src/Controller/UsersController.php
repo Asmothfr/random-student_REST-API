@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Users;
 use App\Service\MasterService;
 use OpenApi\Annotations as OA;
+use App\Service\ValidatorService;
 use App\Repository\UsersRepository;
 use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,11 +23,13 @@ class UsersController extends MasterService
 {
     private UserPasswordHasherInterface $_passwordHasher;
     protected SerializerInterface $_serializer;
+    protected ValidatorService $_validator;
 
-    public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface)
+    public function __construct(UserPasswordHasherInterface $usersPasswordHasher, SerializerInterface $serializerInterface,ValidatorService $validatorService)
     {
         $this->_passwordHasher = $usersPasswordHasher;
         $this->_serializer = $serializerInterface;
+        $this->_validator = $validatorService;
     }
 
     /**
@@ -78,10 +81,13 @@ class UsersController extends MasterService
      * @param EntityManagerInterface $em
      * @return JsonResponse
      */
-    #[Route(name:"create_user", methods:['POST'])]
+    #[Route("/create", name:"create_user", methods:['POST'])]
     public function createUser(Request $request, EntityManagerInterface $em) : JsonResponse
     {
         $userInfoJson = $request->getContent();
+        if(!$userInfoJson)
+            return new JsonResponse(null, Response::HTTP_BAD_REQUEST, [], false);
+        
         $user = $this->_serializer->deserialize($userInfoJson, Users::class,'json');
         
         $isValidate = $this->_validator->validator($user);

@@ -16,7 +16,7 @@ use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use OpenApi\Annotations as OA;
 
-#[Route('api/students')]
+#[Route('/api/students')]
 class StudentsController extends MasterService
 {
     /**
