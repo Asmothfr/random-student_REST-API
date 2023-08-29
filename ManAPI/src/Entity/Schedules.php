@@ -19,21 +19,23 @@ class Schedules
 
     #[ORM\ManyToOne(inversedBy: 'schedules',)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull()]
     #[Groups(['schedules_info'])]
     private ?Classrooms $FK_classroom = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Assert\DateTime()]
     #[Groups(['schedules_info', 'schedules_from_classroom'])]
+    #[Assert\NotNull()]
     private ?\DateTimeInterface $start_time = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Assert\DateTime()]
     #[Groups(['schedules_info', 'schedules_from_classroom'])]
+    #[Assert\NotNull()]
     private ?\DateTimeInterface $end_time = null;
 
     #[ORM\ManyToOne(inversedBy: 'schedules')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull()]
     private ?Users $FK_user = null;
 
     public function getId(): ?int

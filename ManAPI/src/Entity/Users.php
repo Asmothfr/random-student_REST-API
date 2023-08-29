@@ -87,6 +87,13 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->id;
     }
 
+    public function setId(int $id): ?int
+    {
+        $this->id = $id;
+
+        return $id;
+    }
+
     public function getEmail(): ?string
     {
         return $this->email;

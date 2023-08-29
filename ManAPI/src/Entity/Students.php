@@ -18,6 +18,7 @@ class Students
 
     #[ORM\ManyToOne(inversedBy: 'students')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: "FK_classroom can't be null")]
     private ?Classrooms $FK_classroom = null;
 
     #[ORM\Column(length: 31, nullable: true)]
@@ -37,6 +38,7 @@ class Students
 
     #[ORM\ManyToOne(inversedBy: 'students')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: "FK_user can't be null")]
     private ?Users $FK_user = null;
 
     public function getId(): ?int

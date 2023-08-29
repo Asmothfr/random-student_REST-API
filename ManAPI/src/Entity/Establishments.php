@@ -33,6 +33,7 @@ class Establishments
 
     #[ORM\ManyToOne(inversedBy: 'establishments')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message:'FK_user can not be null')]
     private ?Users $FK_user = null;
 
 
@@ -45,6 +46,13 @@ class Establishments
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): ?int
+    {
+        $this->id = $id;
+
+        return $id;
     }
 
     public function getName(): ?string

@@ -21,6 +21,7 @@ class Classrooms
     #[ORM\ManyToOne(inversedBy: 'classrooms')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(["classrooms_info"])]
+    #[Assert\NotNull(message: "FK_establishment can't be null")]
     private ?Establishments $FK_establishment = null;
 
     #[ORM\Column(length: 127)]
@@ -39,6 +40,7 @@ class Classrooms
 
     #[ORM\ManyToOne(inversedBy: 'classrooms')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: "FK_user can't be null")]
     private ?Users $FK_user = null;
 
     public function __construct()
@@ -50,6 +52,13 @@ class Classrooms
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): ?int
+    {
+        $this->id = $id;
+
+        return $id;
     }
 
     public function getFKEstablishmentId(): ?establishments

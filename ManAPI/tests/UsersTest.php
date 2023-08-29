@@ -4,14 +4,14 @@ namespace App\Tests;
 
 use App\Entity\Users;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UsersTest extends KernelTestCase
 {    
     public function testSuccessData(): void
     {
         self::bootKernel();
-        $container = static::getContainer('Testpassword12345/');
-
+        $container = static::getContainer();
         $user = new Users;
         $user->setEmail('test@test.com')
             ->setName('testMan0')
