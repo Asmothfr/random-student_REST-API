@@ -13,7 +13,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
-
 #[ORM\Entity(repositoryClass: UsersRepository::class)]
 class Users implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -33,7 +32,16 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
      * @Type("array")
      */
     #[ORM\Column]
-    #[Assert\NotBlank(message: "Roles is required.")]
+    #[Assert\Collection(
+        fields:[
+            new Assert\Required([
+                new Assert\NotBlank(),
+                new Assert\ExpressionSyntax(
+                    allowedVariables:['USER', 'ADMIN']
+                )
+            ])
+        ]
+    )]
     private array $roles = [];
 
     /**
@@ -41,14 +49,14 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     #[Assert\NotBlank(message: "Password is required.")]
-    #[Assert\Regex('/[-a-zA-Z0-9]/')]
-    #[Assert\Length(min: 16, max:255, minMessage: 'Password must be at least 16 characters long', maxMessage: 'Password cannot be longer than 255 characters',)]
+    // #[Assert\Regex('/[-a-zA-Z0-9]/')]
+    #[Assert\Length(60, minMessage: 'Password is not hashed.')]
     private ?string $password = null;
 
     #[ORM\Column(length: 31)]
     #[Assert\NotBlank(message: "Name is required.")]
     #[Assert\Regex('/[-a-zA-Z0-9]/')]
-    #[Assert\Length(min: 8, max:32, minMessage: 'Name must be at least 8 characters long', maxMessage: 'Name cannot be longer than 32 characters',)]
+    #[Assert\Length(min: 8, max:32, minMessage: 'Name must be at least 8 characters long', maxMessage: 'Name cannot be longer than 32 characters')]
     #[Groups(["user_info"])]
     private ?string $name = null;
 

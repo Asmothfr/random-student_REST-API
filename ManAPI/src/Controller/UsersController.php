@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\Users;
-use App\Service\MasterService;
 use OpenApi\Annotations as OA;
 use App\Service\ValidatorService;
 use App\Repository\UsersRepository;
@@ -12,6 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
  
 #[Route('/api/users')]
-class UsersController extends MasterService
+class UsersController extends AbstractController
 {
     private UserPasswordHasherInterface $_passwordHasher;
     protected SerializerInterface $_serializer;

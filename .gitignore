@@ -354,6 +354,7 @@ MigrationBackup/
 .env.local
 .env.local.php
 .env.*.local
+.env.test
 config/secrets/prod/prod.decrypt.private.php
 public/bundles/
 var/
@@ -363,3 +364,13 @@ vendor/
 ###> lexik/jwt-authentication-bundle ###
 ManApi/config/jwt/*.pem
 ###< lexik/jwt-authentication-bundle ###
+
+###> symfony/phpunit-bridge ###
+.phpunit.result.cache
+phpunit.xml
+###< symfony/phpunit-bridge ###
+
+###> phpunit/phpunit ###
+phpunit.xml
+.phpunit.result.cache
+###< phpunit/phpunit ###
