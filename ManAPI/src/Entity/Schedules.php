@@ -38,6 +38,13 @@ class Schedules
     #[Assert\NotNull()]
     private ?Users $FK_user = null;
 
+    #[ORM\Column(length: 15)]
+    #[Assert\NotBlank(message: 'Day is required.')]
+    #[Assert\ExpressionSyntax(
+        allowedVariables: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    )]
+    private ?string $Day = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -87,6 +94,18 @@ class Schedules
     public function setFKUser(?Users $FK_user): self
     {
         $this->FK_user = $FK_user;
+
+        return $this;
+    }
+
+    public function getDay(): ?string
+    {
+        return $this->Day;
+    }
+
+    public function setDay(string $Day): self
+    {
+        $this->Day = $Day;
 
         return $this;
     }

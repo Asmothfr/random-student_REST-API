@@ -50,17 +50,61 @@ class SchedulesTest extends KernelTestCase
         $container = static::getContainer();
         $validator = $container->get('validator');
 
-        $startTime = new DateTime('2024-01-01 00:00:00');
-        $endTime = new DateTime('2024-01-01 06:00:00');
+        $startTime = new DateTime('14:00:00');
+        $endTime = new DateTime('16:00:00');
+        $day = "monday";
 
         $schedule = new Schedules;
         $schedule->setFKUser($this->user())
             ->setFKClassroomId($this->classroom())
+            ->setday($day)
             ->setStartTime($startTime)
             ->setEndTime($endTime);
         
         $validatorResult = $validator->validate($schedule);
         $this->assertCount(0,$validatorResult);
+    }
+
+    public function testFailDay(): void
+    {
+        self::bootKernel();
+        $container = static::getContainer();
+        $validator = $container->get('validator');
+
+        $startTime = new DateTime('14:00:00');
+        $endTime = new DateTime('16:00:00');
+        $day = "monday friday";
+
+        $schedule = new Schedules;
+        $schedule->setFKUser($this->user())
+            ->setFKClassroomId($this->classroom())
+            ->setday($day)
+            ->setStartTime($startTime)
+            ->setEndTime($endTime);
+        
+        $validatorResult = $validator->validate($schedule);
+        $this->assertCount(1,$validatorResult);
+    }
+
+    public function testEmptyDay(): void
+    {
+        self::bootKernel();
+        $container = static::getContainer();
+        $validator = $container->get('validator');
+
+        $startTime = new DateTime('14:00:00');
+        $endTime = new DateTime('16:00:00');
+        $day = "";
+
+        $schedule = new Schedules;
+        $schedule->setFKUser($this->user())
+            ->setFKClassroomId($this->classroom())
+            ->setday($day)
+            ->setStartTime($startTime)
+            ->setEndTime($endTime);
+        
+        $validatorResult = $validator->validate($schedule);
+        $this->assertCount(1,$validatorResult);
     }
 
     public function testFailStartTimeNull(): void
@@ -70,10 +114,12 @@ class SchedulesTest extends KernelTestCase
         $validator = $container->get('validator');
 
         $endTime = new DateTime('2024-01-01 06:00:00');
+        $day = "monday";
 
         $schedule = new Schedules;
         $schedule->setFKUser($this->user())
             ->setFKClassroomId($this->classroom())
+            ->setDay($day)
             ->setEndTime($endTime);
         
         $validatorResult = $validator->validate($schedule);
@@ -88,9 +134,11 @@ class SchedulesTest extends KernelTestCase
 
         $startTime = new DateTime('2024-01-01 00:00:00');
         $endTime = new DateTime('2024-01-01 06:00:00');
+        $day = "monday";
 
         $schedule = new Schedules;
         $schedule->setFKClassroomId($this->classroom())
+            ->setDay($day)
             ->setStartTime($startTime)
             ->setEndTime($endTime);
         
@@ -106,9 +154,11 @@ class SchedulesTest extends KernelTestCase
 
         $startTime = new DateTime('2024-01-01 00:00:00');
         $endTime = new DateTime('2024-01-01 06:00:00');
+        $day = "monday";
 
         $schedule = new Schedules;
         $schedule->setFKUser($this->user())
+            ->setDay($day)
             ->setStartTime($startTime)
             ->setEndTime($endTime);
         
